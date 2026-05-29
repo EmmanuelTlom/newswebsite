@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title id="page-title">Article — National Detective Magazine</title>
+<meta name="description" content="Read the full story on National Detective Magazine."/>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="assets/style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/ndm-config.js"></script>
+<script src="assets/ndm-data.js"></script>
+<script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
+</head>
+<body x-data="articlePage()" x-init="init()">
+
+<!-- ═══════ NAV ═══════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="nav-brand-name">National <span>Detective</span></span>
+      <span class="nav-brand-tag">Magazine · Est. Nigeria</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html"     class="nav-link">Home</a>
+      <a href="news.html"      class="nav-link active">News</a>
+      <a href="contact.html"   class="nav-link">Contact</a>
+      <a href="advertise.html" class="nav-link">Advertise</a>
+    </div>
+    <span class="nav-live"><span class="nav-live-dot"></span> Live</span>
+    <button class="nav-burger" @click="navOpen=!navOpen" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-mobile" :class="{open:navOpen}">
+    <a href="index.html"     class="nav-link">Home</a>
+    <a href="news.html"      class="nav-link">News</a>
+    <a href="contact.html"   class="nav-link">Contact</a>
+    <a href="advertise.html" class="nav-link">Advertise</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- ═══════ LOADING STATE ═══════ -->
+  <template x-if="loading">
+    <div style="padding:80px 0;">
+      <div class="container" style="max-width:900px;">
+        <div class="skeleton" style="height:18px;width:200px;margin-bottom:24px;"></div>
+        <div class="skeleton" style="height:48px;width:90%;margin-bottom:16px;"></div>
+        <div class="skeleton" style="height:48px;width:70%;margin-bottom:28px;"></div>
+        <div class="skeleton" style="aspect-ratio:16/9;border-radius:4px;margin-bottom:32px;"></div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <template x-for="i in 8" :key="i">
+            <div class="skeleton" style="height:16px;" :style="i%3===0 ? 'width:60%' : ''"></div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- ═══════ NOT FOUND ═══════ -->
+  <template x-if="!loading && !article">
+    <div class="empty-state" style="padding:120px 24px;">
+      <div class="empty-state-icon"><span>404</span></div>
+      <h3>Story not found</h3>
+      <p>This article may have been removed or the link is incorrect.</p>
+      <a href="news.html" class="btn btn-primary btn-sm" style="margin-top:16px;">← Back to News</a>
+    </div>
+  </template>
+
+  <!-- ═══════ ARTICLE ═══════ -->
+  <template x-if="!loading && article">
+    <div>
+      <!-- Dark hero with headline -->
+      <div class="article-hero">
+        <div class="article-hero-inner">
+          <div class="breadcrumb">
+            <a href="index.html">Home</a>
+            <span>/</span>
+            <a href="news.html">News</a>
+            <template x-if="article.category_name">
+              <span>/</span>
+            </template>
+            <template x-if="article.category_name">
+              <a :href="'news.html?cat='+article.category_name.toLowerCase().replace(/\s+/g,'-')" x-text="article.category_name"></a>
+            </template>
+          </div>
+          <div class="article-meta-row">
+            <span class="cat-badge" :style="article.category_color ? 'background:'+article.category_color+'33;color:'+article.category_color+';border:1px solid '+article.category_color+'55' : 'background:rgba(185,28,28,0.2);color:#F87171;'" x-text="article.category_name || 'News'"></span>
+            <span class="article-card-date" style="color:rgba(255,255,255,0.5);" x-text="fmtDate(article.published_at)"></span>
+            <span class="views-badge" x-show="article.views > 0">
+              👁 <span x-text="fmtNum(article.views)"></span> views
+            </span>
+          </div>
+          <h1 x-text="article.title"></h1>
+          <p class="article-hero-excerpt" x-text="article.excerpt" x-show="article.excerpt"></p>
+          <div class="article-byline">
+            <div class="article-byline-avatar" x-text="(article.author_name||'N').charAt(0)">
+              <template x-if="article.author_image">
+                <img :src="article.author_image" :alt="article.author_name" style="width:100%;height:100%;object-fit:cover;"/>
+              </template>
+            </div>
+            <div>
+              <strong x-text="article.author_name || 'NDM Staff'"></strong>
+              <span style="color:rgba(255,255,255,0.4);margin:0 8px;">·</span>
+              <span x-text="fmtDateTime(article.published_at)"></span>
+            </div>
+          </div>
+        </div>
+        <!-- Cover image flush below headline -->
+        <div class="article-cover" x-show="article.cover_image">
+          <img :src="article.cover_image" :alt="article.title" loading="eager"/>
+        </div>
+      </div>
+
+      <!-- Article body + sidebar layout -->
+      <div class="article-layout" style="padding-top:40px;">
+        <!-- Main content -->
+        <div>
+          <div class="article-body-wrap" style="padding-left:0;padding-right:0;">
+            <div class="article-body" x-html="article.content || '<p>Full article content not available.</p>'"></div>
+
+            <!-- Share bar -->
+            <div class="article-share">
+              <span class="article-share-label">Share</span>
+              <a :href="'https://twitter.com/intent/tweet?text='+encodeURIComponent(article.title)+'&url='+encodeURIComponent(location.href)"
+                 target="_blank" class="share-btn">Twitter</a>
+              <a :href="'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href)"
+                 target="_blank" class="share-btn">Facebook</a>
+              <a :href="'https://api.whatsapp.com/send?text='+encodeURIComponent(article.title+' — '+location.href)"
+                 target="_blank" class="share-btn">WhatsApp</a>
+              <button class="share-btn" @click="copyLink()">
+                <span x-text="copied ? '✓ Copied' : 'Copy link'"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <!-- Related articles -->
+          <div class="sidebar-block" x-show="relatedArticles.length > 0">
+            <div class="sidebar-title">Related Stories</div>
+            <template x-for="rel in relatedArticles" :key="rel.id">
+              <a :href="'article.html?slug='+rel.slug" class="sidebar-card">
+                <div class="sidebar-card-img">
+                  <template x-if="rel.cover_image">
+                    <img :src="rel.cover_image" :alt="rel.title" loading="lazy"/>
+                  </template>
+                  <template x-if="!rel.cover_image">
+                    <div class="sidebar-card-img-placeholder"></div>
+                  </template>
+                </div>
+                <div>
+                  <div class="sidebar-card-title" x-text="rel.title"></div>
+                  <div class="sidebar-card-date" x-text="fmtDate(rel.published_at)"></div>
+                </div>
+              </a>
+            </template>
+          </div>
+          <!-- Latest news -->
+          <div class="sidebar-block" x-show="latestArticles.length > 0">
+            <div class="sidebar-title">Latest News</div>
+            <template x-for="art in latestArticles.slice(0,5)" :key="art.id">
+              <a :href="'article.html?slug='+art.slug" class="sidebar-card">
+                <div class="sidebar-card-img">
+                  <template x-if="art.cover_image">
+                    <img :src="art.cover_image" :alt="art.title" loading="lazy"/>
+                  </template>
+                  <template x-if="!art.cover_image">
+                    <div class="sidebar-card-img-placeholder"></div>
+                  </template>
+                </div>
+                <div>
+                  <div class="sidebar-card-title" x-text="art.title"></div>
+                  <div class="sidebar-card-date" x-text="fmtDate(art.published_at)"></div>
+                </div>
+              </a>
+            </template>
+          </div>
+          <!-- Ad placeholder -->
+          <div class="sidebar-block">
+            <div style="background:var(--elevated);border:1px dashed var(--border);border-radius:4px;padding:32px;text-align:center;">
+              <p style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Advertisement</p>
+              <p style="font-size:13px;color:var(--text-muted);">Place your ad here.</p>
+              <a href="advertise.html" style="font-size:12px;color:var(--crimson);text-decoration:underline;display:block;margin-top:8px;">Learn more →</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- More from this category -->
+      <section style="background:var(--elevated);border-top:1px solid var(--border);padding:56px 0;" x-show="moreArticles.length > 0">
+        <div class="container">
+          <div class="section-header">
+            <div>
+              <div class="section-label">More Stories</div>
+              <h2 class="section-title" x-text="article.category_name ? 'More in ' + article.category_name : 'More Stories'"></h2>
+            </div>
+            <a href="news.html" class="section-more">See all</a>
+          </div>
+          <div class="news-grid" style="grid-template-columns:repeat(3,1fr);">
+            <template x-for="art in moreArticles.slice(0,3)" :key="art.id">
+              <a :href="'article.html?slug='+art.slug" class="article-card">
+                <div class="article-card-img">
+                  <template x-if="art.cover_image">
+                    <img :src="art.cover_image" :alt="art.title" loading="lazy"/>
+                  </template>
+                  <template x-if="!art.cover_image">
+                    <div class="article-card-placeholder"></div>
+                  </template>
+                </div>
+                <div class="article-card-body">
+                  <div class="article-card-meta">
+                    <span class="cat-badge" :style="art.category_color ? 'background:'+art.category_color+'22;color:'+art.category_color : ''" x-text="art.category_name || 'News'"></span>
+                    <span class="article-card-date" x-text="fmtDate(art.published_at)"></span>
+                  </div>
+                  <h3 class="article-card-title" x-text="art.title"></h3>
+                  <p class="article-card-excerpt" x-text="art.excerpt"></p>
+                </div>
+              </a>
+            </template>
+          </div>
+        </div>
+      </section>
+    </div>
+  </template>
+
+  <!-- ═══════ FOOTER ═══════ -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-brand-name">National <span>Detective</span></div>
+          <div class="footer-brand-tag">Magazine · Nigeria</div>
+          <p>Nigeria's foremost investigative news publication.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Magazine</h5>
+          <a href="index.html">Home</a>
+          <a href="news.html">All News</a>
+          <a href="advertise.html">Advertise</a>
+          <a href="contact.html">Contact</a>
+        </div>
+        <div class="footer-col">
+          <h5>Sections</h5>
+          <template x-for="cat in categories.slice(0,4)" :key="cat.id">
+            <a :href="'news.html?cat='+cat.slug" x-text="cat.name"></a>
+          </template>
+        </div>
+        <div class="footer-col">
+          <h5>Legal</h5>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms</a>
+          <a href="admin.html">Admin</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© <span x-text="currentYear"></span> National Detective Magazine.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+function articlePage() {
+  const D = window.NDMData;
+  return {
+    navOpen: false,
+    loading: true,
+    article: null,
+    relatedArticles: [],
+    latestArticles: [],
+    moreArticles: [],
+    categories: [],
+    copied: false,
+    currentYear: new Date().getFullYear(),
+
+    async init() {
+      const params = new URLSearchParams(location.search);
+      const slug = params.get('slug');
+      if (!slug) { this.loading = false; return; }
+
+      const [art, cats, latest] = await Promise.all([
+        D.getArticleBySlug(slug),
+        D.getCategories(),
+        D.getPublishedArticles({ limit: 8 }),
+      ]);
+
+      this.article    = art;
+      this.categories = cats;
+      this.latestArticles = latest.filter(a => a.slug !== slug);
+
+      if (art) {
+        document.title = art.title + ' — National Detective Magazine';
+        // increment view count (fire and forget)
+        D.incrementViews(art.id);
+        // load more from same category
+        if (art.category_name) {
+          const cat = cats.find(c => c.name === art.category_name);
+          if (cat) {
+            const more = await D.getPublishedArticles({ limit: 6, categorySlug: cat.slug });
+            this.moreArticles = more.filter(a => a.slug !== slug);
+          }
+        } else {
+          this.moreArticles = latest.filter(a => a.slug !== slug).slice(0, 3);
+        }
+        this.relatedArticles = this.moreArticles.slice(0, 4);
+      }
+
+      this.loading = false;
+    },
+
+    async copyLink() {
+      try {
+        await navigator.clipboard.writeText(location.href);
+        this.copied = true;
+        setTimeout(() => { this.copied = false; }, 2500);
+      } catch (e) {
+        alert('Could not copy — please copy the URL manually.');
+      }
+    },
+
+    fmtDate(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleDateString('en-NG', { day:'numeric', month:'long', year:'numeric' });
+    },
+    fmtDateTime(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleDateString('en-NG', { day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    },
+    fmtNum(n) { return Number(n || 0).toLocaleString('en-NG'); },
+  };
+}
+</script>
+</body>
+</html>

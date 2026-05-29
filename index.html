@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>National Detective Magazine — Uncovering the Truth, Every Day</title>
+<meta name="description" content="Nigeria's foremost investigative news publication. Bold, fact-driven journalism on politics, crime, business and more."/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="National Detective Magazine"/>
+<meta property="og:description" content="Nigeria's foremost investigative news publication."/>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="assets/style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/ndm-config.js"></script>
+<script src="assets/ndm-data.js"></script>
+<script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
+</head>
+<body x-data="homePage()" x-init="init()">
+
+<!-- ═══════ NAV ═══════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="nav-brand-name">National <span>Detective</span></span>
+      <span class="nav-brand-tag">Magazine · Est. Nigeria</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html"    class="nav-link active">Home</a>
+      <a href="news.html"     class="nav-link">News</a>
+      <a href="contact.html"  class="nav-link">Contact</a>
+      <a href="advertise.html" class="nav-link">Advertise</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="nav-live"><span class="nav-live-dot"></span> Live</span>
+    </div>
+    <button class="nav-burger" @click="navOpen=!navOpen" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-mobile" :class="{open:navOpen}">
+    <a href="index.html"     class="nav-link active">Home</a>
+    <a href="news.html"      class="nav-link">News</a>
+    <a href="contact.html"   class="nav-link">Contact</a>
+    <a href="advertise.html" class="nav-link">Advertise</a>
+  </div>
+</nav>
+
+<!-- ═══════ TICKER ═══════ -->
+<div class="ticker">
+  <div class="ticker-label"><span class="ticker-label-dot"></span> Breaking</div>
+  <div class="ticker-track">
+    <div class="ticker-inner" id="ticker-inner">
+      <template x-if="tickerItems.length">
+        <template x-for="(item, i) in [...tickerItems,...tickerItems]" :key="i">
+          <span class="ticker-item" x-text="item"></span>
+        </template>
+      </template>
+      <template x-if="!tickerItems.length">
+        <span class="ticker-item">Welcome to National Detective Magazine — Nigeria's bold investigative voice</span>
+      </template>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ EDITION BAR ═══════ -->
+<div class="edition-bar">
+  <span x-text="todayLabel"></span>
+  <span>National Detective Magazine</span>
+  <span x-text="'Vol. 1, ' + currentYear"></span>
+</div>
+
+<!-- ═══════ HERO SECTION ═══════ -->
+<section class="hero-section">
+  <div class="container">
+
+    <!-- Loading skeleton -->
+    <template x-if="loading">
+      <div class="hero-grid">
+        <div class="skeleton-card">
+          <div class="skeleton skeleton-img"></div>
+          <div class="skeleton-body">
+            <div class="skeleton skeleton-line short"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line medium"></div>
+            <div class="skeleton skeleton-line short"></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <template x-for="i in 3" :key="i">
+            <div class="skeleton-card" style="display:flex;gap:12px;padding:12px;">
+              <div class="skeleton" style="width:90px;height:64px;flex-shrink:0;border-radius:4px;"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                <div class="skeleton skeleton-line short"></div>
+                <div class="skeleton skeleton-line medium"></div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+
+    <!-- Hero content -->
+    <template x-if="!loading">
+      <div class="hero-grid">
+        <!-- Main featured article -->
+        <template x-if="featuredArticles.length > 0">
+          <a :href="'article.html?slug=' + featuredArticles[0].slug" class="article-card hero">
+            <div class="article-card-img">
+              <template x-if="featuredArticles[0].cover_image">
+                <img :src="featuredArticles[0].cover_image" :alt="featuredArticles[0].title" loading="eager"/>
+              </template>
+              <template x-if="!featuredArticles[0].cover_image">
+                <div class="article-card-placeholder"></div>
+              </template>
+            </div>
+            <div class="article-card-body">
+              <div class="article-card-meta">
+                <span class="cat-badge" :style="featuredArticles[0].category_color ? 'background:'+featuredArticles[0].category_color+'22;color:'+featuredArticles[0].category_color : ''" x-text="featuredArticles[0].category_name || 'News'"></span>
+                <span class="article-card-date" x-text="fmtDate(featuredArticles[0].published_at)"></span>
+              </div>
+              <h2 class="article-card-title" style="font-size:clamp(22px,3vw,36px);" x-text="featuredArticles[0].title"></h2>
+              <p class="article-card-excerpt" x-text="featuredArticles[0].excerpt"></p>
+            </div>
+          </a>
+        </template>
+        <template x-if="featuredArticles.length === 0">
+          <div class="empty-state" style="padding:40px 0;">
+            <div class="empty-state-icon"><span>NDM</span></div>
+            <h3>No featured stories yet</h3>
+            <p>Add articles and mark them as featured in the admin panel.</p>
+          </div>
+        </template>
+
+        <!-- Secondary featured list -->
+        <div class="hero-secondary">
+          <template x-for="(art, i) in featuredArticles.slice(1,5)" :key="art.id">
+            <a :href="'article.html?slug=' + art.slug" class="article-card horizontal">
+              <div class="article-card-img">
+                <template x-if="art.cover_image">
+                  <img :src="art.cover_image" :alt="art.title" loading="lazy"/>
+                </template>
+                <template x-if="!art.cover_image">
+                  <div class="article-card-placeholder"></div>
+                </template>
+              </div>
+              <div class="article-card-body">
+                <div class="article-card-meta">
+                  <span class="cat-badge" :style="art.category_color ? 'background:'+art.category_color+'22;color:'+art.category_color : ''" x-text="art.category_name || 'News'"></span>
+                </div>
+                <h3 class="article-card-title" x-text="art.title"></h3>
+                <span class="article-card-date" x-text="fmtDate(art.published_at)"></span>
+              </div>
+            </a>
+          </template>
+          <template x-if="featuredArticles.length <= 1">
+            <p style="color:var(--text-muted);font-size:13px;padding:20px 0;">More featured stories will appear here.</p>
+          </template>
+        </div>
+      </div>
+    </template>
+  </div>
+</section>
+
+<!-- ═══════ CATEGORY FILTER + LATEST NEWS ═══════ -->
+<section class="news-section" style="background:var(--bg);">
+  <div class="container">
+
+    <!-- Section header + filter -->
+    <div class="section-header">
+      <div>
+        <div class="section-label">Latest Stories</div>
+        <h2 class="section-title">Today's News</h2>
+      </div>
+      <a href="news.html" class="section-more">All articles</a>
+    </div>
+
+    <!-- Category filter tabs -->
+    <div class="cat-bar" style="margin-bottom:32px;" x-show="categories.length > 0">
+      <button class="cat-btn" :class="{active:activeCategory===null}" @click="filterBy(null)">All</button>
+      <template x-for="cat in categories" :key="cat.id">
+        <button class="cat-btn" :class="{active:activeCategory===cat.slug}" @click="filterBy(cat.slug)" x-text="cat.name"></button>
+      </template>
+    </div>
+
+    <!-- Loading skeleton -->
+    <template x-if="loadingLatest">
+      <div class="news-grid">
+        <template x-for="i in 6" :key="i">
+          <div class="skeleton-card">
+            <div class="skeleton skeleton-img"></div>
+            <div class="skeleton-body">
+              <div class="skeleton skeleton-line short"></div>
+              <div class="skeleton skeleton-line"></div>
+              <div class="skeleton skeleton-line medium"></div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <!-- Articles grid -->
+    <template x-if="!loadingLatest">
+      <template x-if="latestArticles.length > 0">
+        <div class="news-grid">
+          <template x-for="art in latestArticles" :key="art.id">
+            <a :href="'article.html?slug=' + art.slug" class="article-card">
+              <div class="article-card-img">
+                <template x-if="art.cover_image">
+                  <img :src="art.cover_image" :alt="art.title" loading="lazy"/>
+                </template>
+                <template x-if="!art.cover_image">
+                  <div class="article-card-placeholder"></div>
+                </template>
+              </div>
+              <div class="article-card-body">
+                <div class="article-card-meta">
+                  <span class="cat-badge" :style="art.category_color ? 'background:'+art.category_color+'22;color:'+art.category_color : ''" x-text="art.category_name || 'News'"></span>
+                  <span class="article-card-date" x-text="fmtDate(art.published_at)"></span>
+                </div>
+                <h3 class="article-card-title" x-text="art.title"></h3>
+                <p class="article-card-excerpt" x-text="art.excerpt"></p>
+                <div class="article-card-author">
+                  <div class="article-card-author-avatar" x-text="(art.author_name||'N').charAt(0)"></div>
+                  <span x-text="art.author_name || 'NDM Staff'"></span>
+                </div>
+              </div>
+            </a>
+          </template>
+        </div>
+      </template>
+      <template x-if="latestArticles.length === 0">
+        <div class="empty-state">
+          <div class="empty-state-icon"><span>NDM</span></div>
+          <h3>No articles yet</h3>
+          <p x-text="activeCategory ? 'No articles in this category.' : 'Check back soon for the latest stories.'"></p>
+        </div>
+      </template>
+    </template>
+
+    <!-- Load more -->
+    <div style="text-align:center;margin-top:48px;" x-show="!loadingLatest && latestArticles.length >= pageSize">
+      <button class="btn btn-secondary" :class="{busy:loadingMore}" @click="loadMore()">
+        <template x-if="loadingMore"><span class="spinner"></span></template>
+        <template x-if="!loadingMore"><span>Load more stories</span></template>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ CATEGORIES STRIP ═══════ -->
+<section style="padding:56px 0;background:var(--elevated);border-top:1px solid var(--border);">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <div class="section-label">Sections</div>
+        <h2 class="section-title">Browse by Topic</h2>
+      </div>
+    </div>
+    <template x-if="categories.length > 0">
+      <div class="cat-grid">
+        <template x-for="(cat, i) in categories.slice(0,8)" :key="cat.id">
+          <a :href="'news.html?cat=' + cat.slug" class="cat-tile">
+            <span class="cat-tile-num" x-text="String(i+1).padStart(2,'0')"></span>
+            <h3 x-text="cat.name"></h3>
+            <p class="cat-tile-desc" x-text="cat.description || 'Read the latest '+cat.name+' stories.'"></p>
+            <span class="cat-tile-arrow">→</span>
+            <div class="cat-tile-accent" :style="'background:' + (cat.color || '#B91C1C')"></div>
+          </a>
+        </template>
+      </div>
+    </template>
+  </div>
+</section>
+
+<!-- ═══════ NEWSLETTER / CTA STRIP ═══════ -->
+<section style="background:var(--ink);padding:64px 0;">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap;">
+    <div>
+      <h2 style="color:white;font-size:clamp(24px,3vw,36px);margin-bottom:8px;">Stay Informed</h2>
+      <p style="color:rgba(255,255,255,0.55);font-size:15px;max-width:440px;">Get the latest investigations and breaking news from National Detective Magazine.</p>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <a href="news.html" class="btn btn-primary btn-lg">Read All Stories</a>
+      <a href="contact.html" class="btn" style="background:rgba(255,255,255,0.08);color:white;border:1px solid rgba(255,255,255,0.2);padding:16px 28px;border-radius:6px;font-size:15px;font-weight:600;">Contact Us</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ FOOTER ═══════ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-brand-name">National <span>Detective</span></div>
+        <div class="footer-brand-tag">Magazine · Nigeria</div>
+        <p x-text="settings.about_text || 'Nigeria\'s foremost investigative news publication. Delivering bold, fact-driven journalism.'"></p>
+        <div class="footer-socials">
+          <a :href="settings.facebook  || '#'" class="footer-social" target="_blank">FB</a>
+          <a :href="settings.twitter   || '#'" class="footer-social" target="_blank">TW</a>
+          <a :href="settings.instagram || '#'" class="footer-social" target="_blank">IG</a>
+          <a :href="settings.whatsapp ? 'https://wa.me/'+settings.whatsapp : '#'" class="footer-social" target="_blank">WA</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Sections</h5>
+        <template x-for="cat in categories.slice(0,5)" :key="cat.id">
+          <a :href="'news.html?cat='+cat.slug" x-text="cat.name"></a>
+        </template>
+      </div>
+      <div class="footer-col">
+        <h5>Magazine</h5>
+        <a href="index.html">Home</a>
+        <a href="news.html">All News</a>
+        <a href="advertise.html">Advertise</a>
+        <a href="contact.html">Contact Us</a>
+        <a href="admin.html">Admin</a>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <a :href="'mailto:' + (settings.contact_email || 'info@nationaldetective.ng')" x-text="settings.contact_email || 'info@nationaldetective.ng'"></a>
+        <a :href="'tel:' + (settings.contact_phone || '')" x-show="settings.contact_phone" x-text="settings.contact_phone"></a>
+        <span style="color:rgba(255,255,255,0.45);font-size:13px;" x-text="settings.contact_address" x-show="settings.contact_address"></span>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p x-text="'© ' + currentYear + ' National Detective Magazine. All rights reserved.'"></p>
+      <div class="footer-legal">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Use</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+function homePage() {
+  const D = window.NDMData;
+  return {
+    navOpen: false,
+    loading: true,
+    loadingLatest: true,
+    loadingMore: false,
+    featuredArticles: [],
+    latestArticles: [],
+    categories: [],
+    settings: {},
+    activeCategory: null,
+    tickerItems: [],
+    pageSize: 6,
+    currentOffset: 0,
+    currentYear: new Date().getFullYear(),
+    todayLabel: new Date().toLocaleDateString('en-NG', { weekday:'long', year:'numeric', month:'long', day:'numeric' }),
+
+    async init() {
+      const [featured, categories, settings] = await Promise.all([
+        D.getFeaturedArticles(5),
+        D.getCategories(),
+        D.getSiteSettings(),
+      ]);
+      this.featuredArticles = featured;
+      this.categories       = categories;
+      this.settings         = settings;
+      this.tickerItems      = featured.map(a => a.title);
+      this.loading = false;
+
+      // load latest
+      await this.fetchLatest();
+    },
+
+    async fetchLatest() {
+      this.loadingLatest = true;
+      this.currentOffset = 0;
+      this.latestArticles = await D.getPublishedArticles({
+        limit: this.pageSize, offset: 0,
+        categorySlug: this.activeCategory,
+      });
+      this.loadingLatest = false;
+    },
+
+    async filterBy(slug) {
+      this.activeCategory = slug;
+      await this.fetchLatest();
+    },
+
+    async loadMore() {
+      this.loadingMore = true;
+      this.currentOffset += this.pageSize;
+      const more = await D.getPublishedArticles({
+        limit: this.pageSize,
+        offset: this.currentOffset,
+        categorySlug: this.activeCategory,
+      });
+      this.latestArticles = [...this.latestArticles, ...more];
+      this.loadingMore = false;
+    },
+
+    fmtDate(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' });
+    },
+  };
+}
+</script>
+</body>
+</html>

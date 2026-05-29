@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Admin — National Detective Magazine</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', system-ui, sans-serif; background: #F5F3EE; color: #111; -webkit-font-smoothing: antialiased; }
+
+:root {
+  --crimson:      #B91C1C;
+  --crimson-dark: #991B1B;
+  --crimson-faint:#FFF5F5;
+  --ink:          #111111;
+  --text:         #374151;
+  --muted:        #6B7280;
+  --bg:           #F5F3EE;
+  --surface:      #FFFFFF;
+  --border:       #E5E0D8;
+  --border-light: #F0EDE6;
+}
+
+h1,h2,h3,h4 { font-family: 'Playfair Display', serif; font-weight: 700; color: var(--ink); }
+
+/* LOGIN */
+.login-wrap  { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
+.login-card  { background:var(--surface); border:1px solid var(--border); padding:40px; width:100%; max-width:400px; border-radius:8px; box-shadow:0 8px 32px rgba(0,0,0,0.06); }
+.login-brand { display:flex; flex-direction:column; gap:2px; margin-bottom:28px; }
+.login-brand-name { font-family:'Playfair Display',serif; font-size:22px; font-weight:900; font-style:italic; }
+.login-brand-name span { color:var(--crimson); }
+.login-brand-tag { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); }
+.login-title { font-size:24px; margin-bottom:4px; }
+.login-sub   { color:var(--muted); font-size:13px; margin-bottom:24px; }
+
+/* ADMIN LAYOUT */
+.admin-wrap  { display:flex; min-height:100vh; }
+.admin-sidebar {
+  width:220px; flex-shrink:0;
+  background:var(--ink); color:white;
+  display:flex; flex-direction:column;
+  position:fixed; top:0; left:0; bottom:0; z-index:50;
+  overflow-y:auto;
+}
+.admin-sidebar-brand { padding:24px 20px 16px; border-bottom:1px solid rgba(255,255,255,0.1); }
+.admin-sidebar-brand-name { font-family:'Playfair Display',serif; font-size:16px; font-weight:900; font-style:italic; line-height:1.1; }
+.admin-sidebar-brand-name span { color:var(--crimson); }
+.admin-sidebar-brand-tag { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-top:2px; }
+.admin-sidebar-badge { background:rgba(185,28,28,0.2); color:#FCA5A5; padding:2px 7px; border-radius:3px; font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:0.1em; text-transform:uppercase; display:inline-block; margin-top:6px; }
+.admin-nav { flex:1; padding:16px 0; }
+.admin-nav-section { padding:6px 16px; font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-top:12px; }
+.admin-nav-item {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 20px; font-size:13.5px; font-weight:500;
+  color:rgba(255,255,255,0.65); cursor:pointer;
+  transition:all 0.15s; border:none; background:none;
+  width:100%; text-align:left; font-family:inherit;
+  position:relative;
+}
+.admin-nav-item:hover  { color:white; background:rgba(255,255,255,0.06); }
+.admin-nav-item.active { color:white; background:rgba(185,28,28,0.25); }
+.admin-nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--crimson); border-radius:0 2px 2px 0; }
+.admin-nav-icon { font-size:16px; width:20px; text-align:center; flex-shrink:0; }
+.admin-nav-count { margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:10px; background:rgba(255,255,255,0.12); color:rgba(255,255,255,0.6); padding:1px 7px; border-radius:10px; }
+.admin-nav-count.unread { background:rgba(185,28,28,0.4); color:#FCA5A5; }
+.admin-sidebar-footer { padding:16px 20px; border-top:1px solid rgba(255,255,255,0.1); }
+.admin-sidebar-footer button { width:100%; padding:9px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:rgba(255,255,255,0.6); font-size:12px; font-family:inherit; cursor:pointer; transition:all 0.15s; }
+.admin-sidebar-footer button:hover { background:rgba(185,28,28,0.2); color:white; border-color:rgba(185,28,28,0.4); }
+
+/* ADMIN MAIN */
+.admin-main { flex:1; margin-left:220px; padding:32px 40px 80px; }
+.admin-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; flex-wrap:wrap; gap:16px; }
+.admin-topbar h2 { font-size:26px; }
+.admin-topbar-right { display:flex; align-items:center; gap:12px; }
+
+/* EDITOR panel */
+.editor-panel { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:28px; margin-bottom:28px; }
+.editor-panel h3 { font-size:20px; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--border-light); }
+.form-group { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+.form-label { font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+.form-input, .form-select, .form-textarea {
+  width:100%; padding:10px 12px;
+  background:var(--surface); color:var(--ink);
+  border:1px solid var(--border); border-radius:6px;
+  font-family:'Inter',sans-serif; font-size:14px;
+  outline:none; transition:border-color 0.2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--crimson); box-shadow:0 0 0 3px rgba(185,28,28,0.08); }
+.form-textarea { min-height:120px; resize:vertical; line-height:1.6; }
+.form-textarea.content { min-height:280px; font-family:'IBM Plex Mono',monospace; font-size:13px; }
+.form-select { appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1.5L6 6.5L11 1.5' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' fill='none'/></svg>"); background-repeat:no-repeat; background-position:right 10px center; padding-right:32px; cursor:pointer; }
+.form-row  { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.form-row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.form-check-row { display:flex; align-items:center; gap:8px; }
+.form-check-row input { width:16px; height:16px; cursor:pointer; accent-color:var(--crimson); }
+.form-check-row label { font-size:13.5px; font-weight:500; color:var(--ink); cursor:pointer; }
+.form-hint { font-size:11px; color:var(--muted); margin-top:3px; }
+
+/* ITEM LIST */
+.item-list { display:flex; flex-direction:column; gap:10px; }
+.item-card  { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:14px 16px; display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center; transition:border-color 0.15s; }
+.item-card:hover { border-color:var(--crimson); }
+.item-thumb { width:64px; height:48px; border-radius:4px; background:var(--bg); object-fit:cover; display:flex; align-items:center; justify-content:center; font-size:20px; overflow:hidden; flex-shrink:0; }
+.item-thumb img { width:100%; height:100%; object-fit:cover; }
+.item-info h4 { font-family:'Playfair Display',serif; font-size:15px; margin-bottom:3px; line-height:1.3; overflow-wrap:anywhere; }
+.item-info .item-meta { font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--muted); letter-spacing:0.04em; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.item-actions { display:flex; gap:6px; flex-shrink:0; }
+.icon-btn { background:var(--surface); border:1px solid var(--border); padding:6px 12px; border-radius:5px; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.05em; cursor:pointer; color:var(--ink); transition:all 0.15s; white-space:nowrap; }
+.icon-btn:hover        { border-color:var(--crimson); color:var(--crimson); }
+.icon-btn.danger:hover { border-color:#DC2626; color:#DC2626; background:#FFF5F5; }
+.icon-btn.success      { border-color:#16A34A; color:#16A34A; }
+
+/* STATUS BADGES */
+.status-badge { display:inline-flex; align-items:center; gap:5px; padding:2px 9px; border-radius:10px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+.status-badge.published { background:#F0FDF4; color:#16A34A; }
+.status-badge.draft     { background:#FEF3C7; color:#B45309; }
+.status-badge.featured  { background:#EFF6FF; color:#1D4ED8; }
+.status-badge.unread    { background:#FFF5F5; color:var(--crimson); }
+.status-badge.read      { background:#F5F3EE; color:var(--muted); }
+
+/* BUTTONS */
+.btn { display:inline-flex; align-items:center; gap:8px; padding:10px 20px; border-radius:6px; font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; border:none; cursor:pointer; transition:all 0.15s; text-decoration:none; white-space:nowrap; }
+.btn-primary { background:var(--crimson); color:white; }
+.btn-primary:hover { background:var(--crimson-dark); }
+.btn-secondary { background:var(--surface); color:var(--ink); border:1px solid var(--border); }
+.btn-secondary:hover { border-color:var(--crimson); color:var(--crimson); }
+.btn-danger { background:#FFF5F5; color:#DC2626; border:1px solid #FECACA; }
+.btn-danger:hover { background:#DC2626; color:white; }
+.btn-sm { padding:7px 14px; font-size:12px; }
+.btn[disabled], .btn.busy { opacity:0.6; pointer-events:none; }
+.btn-full { width:100%; justify-content:center; }
+
+/* ALERTS */
+.alert { padding:12px 16px; border-radius:6px; font-size:13.5px; margin-bottom:16px; display:flex; align-items:flex-start; gap:8px; }
+.alert-success { background:#F0FDF4; border:1px solid #BBF7D0; color:#166534; }
+.alert-error   { background:#FFF5F5; border:1px solid #FECACA; color:#991B1B; }
+
+/* UPLOAD ZONE */
+.upload-zone { border:2px dashed var(--border); border-radius:6px; padding:24px; text-align:center; cursor:pointer; transition:border-color 0.2s; background:var(--bg); }
+.upload-zone:hover { border-color:var(--crimson); }
+.upload-preview { max-height:180px; width:100%; object-fit:cover; border-radius:4px; margin-top:10px; display:block; }
+
+/* IMAGE GRID */
+.img-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.img-thumb-wrap { position:relative; width:80px; height:60px; }
+.img-thumb-wrap img { width:100%; height:100%; object-fit:cover; border-radius:4px; }
+.img-remove { position:absolute; top:-5px; right:-5px; width:18px; height:18px; background:var(--crimson); color:white; border:none; border-radius:50%; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
+
+/* STATS CARDS */
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:20px; }
+.stat-card-label { font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.stat-card-num { font-family:'Playfair Display',serif; font-size:36px; color:var(--ink); line-height:1; }
+.stat-card-num.red { color:var(--crimson); }
+
+/* SPINNER */
+@keyframes spin { to { transform:rotate(360deg); } }
+.spinner { width:16px; height:16px; border:2px solid rgba(0,0,0,0.1); border-top-color:var(--crimson); border-radius:50%; animation:spin 0.7s linear infinite; display:inline-block; flex-shrink:0; }
+.spinner.white { border-color:rgba(255,255,255,0.3); border-top-color:white; }
+
+/* MESSAGES / INQUIRIES */
+.msg-card { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:18px; margin-bottom:10px; }
+.msg-card.unread { border-left:3px solid var(--crimson); }
+.msg-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.msg-sender h4 { font-size:15px; margin-bottom:2px; }
+.msg-sender .msg-email { font-size:12.5px; color:var(--muted); }
+.msg-time { font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--muted); white-space:nowrap; }
+.msg-subject { font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--crimson); margin-bottom:6px; }
+.msg-body { font-size:13.5px; color:var(--text); line-height:1.6; }
+.msg-actions { margin-top:10px; padding-top:10px; border-top:1px solid var(--border-light); display:flex; gap:8px; }
+
+/* SETTINGS */
+.settings-section { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:28px; margin-bottom:24px; }
+.settings-section h3 { font-size:18px; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border-light); }
+
+/* COLOR SWATCHES */
+.color-swatches { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+.color-swatch { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:transform 0.15s; }
+.color-swatch:hover { transform:scale(1.15); }
+.color-swatch.selected { border-color:var(--ink); transform:scale(1.15); }
+
+@media (max-width: 900px) {
+  .admin-sidebar { position:static; width:100%; height:auto; }
+  .admin-main { margin-left:0; padding:20px 16px 60px; }
+  .admin-wrap { flex-direction:column; }
+  .stats-row { grid-template-columns:1fr 1fr; }
+  .form-row, .form-row3 { grid-template-columns:1fr; }
+  .item-card { grid-template-columns:auto 1fr; grid-template-rows:auto auto; }
+  .item-actions { grid-column:1/-1; }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/ndm-config.js"></script>
+<script src="assets/ndm-data.js"></script>
+<script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
+<script>
+function admin() {
+  const D = window.NDMData;
+
+  return {
+    // ── state ──────────────────────────────────────────────────────────────
+    authed:      false,
+    email:       '',
+    pw:          '',
+    pwError:     '',
+    loginBusy:   false,
+    busy:        false,
+    uploadBusy:  false,
+    uploadStatus:'',
+    saveError:   '',
+    saveSuccess: '',
+    tab:         'articles',
+
+    // data lists
+    articles:   [],
+    categories: [],
+    messages:   [],
+    inquiries:  [],
+    settings:   { tagline:'', about_text:'', contact_email:'', contact_phone:'', contact_address:'', whatsapp:'', facebook:'', twitter:'', instagram:'' },
+    settingsBusy:  false,
+    settingsSaved: false,
+
+    // editor
+    editing:     null,   // null = none, 'new' = creating, <index> = editing existing
+    editingType: null,
+    draft:       {},
+
+    // ── auth ───────────────────────────────────────────────────────────────
+    async init() {
+      D.onAuthStateChange(async (event, session) => {
+        if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT' && event !== 'INITIAL_SESSION') return;
+        if (!session) { this.authed = false; return; }
+        await this._checkAndLoad();
+      });
+      try {
+        await Promise.race([
+          this._checkAndLoad(),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
+        ]);
+      } catch (e) {
+        console.warn('[admin] session check failed:', e.message);
+        try { await D.signOut(); } catch(_) {}
+        this.authed = false;
+      }
+    },
+
+    async _checkAndLoad() {
+      const info = await D.getCurrentAdmin();
+      if (info && info.admin && info.admin.is_admin) {
+        this.authed = true;
+        await this._loadAll();
+      } else if (info && info.user) {
+        await D.signOut();
+        this.authed = false;
+        this.pwError = 'This account is not authorised as an admin.';
+      }
+    },
+
+    async _loadAll() {
+      const [articles, categories, messages, inquiries, settings] = await Promise.all([
+        D.getAllArticles(),
+        D.getCategories(),
+        D.getContactMessages(),
+        D.getAdvertiseInquiries(),
+        D.getSiteSettings(),
+      ]);
+      this.articles   = articles;
+      this.categories = categories;
+      this.messages   = messages;
+      this.inquiries  = inquiries;
+      this.settings   = { ...this.settings, ...settings };
+    },
+
+    async tryLogin() {
+      this.pwError = '';
+      if (!this.email || !this.pw) { this.pwError = 'Enter your email and password.'; return; }
+      this.loginBusy = true;
+      try {
+        try { await D.signOut(); } catch(_) {}
+        const { error } = await Promise.race([
+          D.signInWithPassword(this.email.trim().toLowerCase(), this.pw),
+          new Promise((_,rej) => setTimeout(() => rej(new Error('Sign-in timed out. Try again.')), 15000)),
+        ]);
+        if (error) { this.pwError = error.message || 'Sign-in failed.'; return; }
+        this.pw = '';
+        await this._checkAndLoad();
+      } catch (e) {
+        this.pwError = e.message || 'Sign-in failed. Try again.';
+      } finally {
+        this.loginBusy = false;
+      }
+    },
+
+    async forceClear() {
+      try { await D.signOut(); } catch(_) {}
+      try { localStorage.clear(); } catch(_) {}
+      location.reload();
+    },
+
+    async logout() { await D.signOut(); this.authed = false; this.email = ''; },
+
+    // ── editor helpers ─────────────────────────────────────────────────────
+    blankDraft(type) {
+      if (type === 'articles')   return { title:'', slug:'', excerpt:'', content:'', cover_image:'', category_id:'', category_name:'', category_color:'', author_name:'NDM Staff', author_image:'', featured:false, published:false, published_at: D.todayISO() + 'T00:00' };
+      if (type === 'categories') return { name:'', slug:'', color:'#B91C1C', description:'', sort_order: this.categories.length + 1 };
+      return {};
+    },
+
+    newItem(type) {
+      this.editing     = 'new';
+      this.editingType = type;
+      this.draft       = this.blankDraft(type);
+      this.saveError   = '';
+      this.uploadStatus= '';
+      window.scrollTo({ top:0, behavior:'smooth' });
+    },
+
+    edit(type, i) {
+      this.editing     = i;
+      this.editingType = type;
+      this.draft       = JSON.parse(JSON.stringify(this[type][i]));
+      this.saveError   = '';
+      this.uploadStatus= '';
+      window.scrollTo({ top:0, behavior:'smooth' });
+    },
+
+    cancel() { this.editing = null; this.editingType = null; this.draft = {}; this.saveError = ''; this.uploadStatus = ''; },
+
+    // Auto-generate slug from title
+    onTitleChange() {
+      if (this.editingType === 'articles' && this.editing === 'new' && this.draft.title) {
+        this.draft.slug = this.draft.title.toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 80);
+      }
+      if (this.editingType === 'categories' && this.editing === 'new' && this.draft.name) {
+        this.draft.slug = this.draft.name.toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 60);
+      }
+    },
+
+    // Sync category snapshot fields when category changes
+    onCategoryChange() {
+      const cat = this.categories.find(c => c.id === this.draft.category_id);
+      if (cat) {
+        this.draft.category_name  = cat.name;
+        this.draft.category_color = cat.color;
+      }
+    },
+
+    // ── save / delete ──────────────────────────────────────────────────────
+    async save() {
+      const type = this.editingType;
+      this.saveError = '';
+
+      // Validation
+      if (type === 'articles') {
+        if (!this.draft.title?.trim()) { this.saveError = 'Title is required.'; return; }
+        if (!this.draft.slug?.trim())  { this.saveError = 'Slug is required.'; return; }
+        if (this.draft.published && !this.draft.published_at) {
+          this.draft.published_at = new Date().toISOString();
+        }
+      }
+      if (type === 'categories') {
+        if (!this.draft.name?.trim()) { this.saveError = 'Category name is required.'; return; }
+        if (!this.draft.slug?.trim()) { this.saveError = 'Slug is required.'; return; }
+      }
+
+      // Strip keys we never send
+      const payload = {};
+      const skip = new Set(['id','created_at','updated_at','views']);
+      for (const [k,v] of Object.entries(this.draft)) {
+        if (skip.has(k)) continue;
+        if (v === '' || v === null || v === undefined) continue;
+        payload[k] = v;
+      }
+      // Ensure booleans are sent even when false
+      if (type === 'articles') {
+        payload.featured  = !!this.draft.featured;
+        payload.published = !!this.draft.published;
+      }
+
+      this.busy = true;
+      try {
+        const doWrite = this.editing === 'new'
+          ? D.createItem(type, payload)
+          : D.updateItem(type, this[type][this.editing].id, payload);
+        const result = await Promise.race([
+          doWrite,
+          new Promise((_,rej) => setTimeout(() => rej(new Error('Save timed out — try signing out and back in.')), 12000)),
+        ]);
+        if (!result) throw new Error('Save returned no data — check your Supabase RLS policies.');
+
+        if (this.editing === 'new') {
+          this[type] = [result, ...this[type]];
+        } else {
+          this[type] = this[type].map((x,i) => i === this.editing ? result : x);
+        }
+        this.saveSuccess = 'Saved successfully!';
+        setTimeout(() => { this.saveSuccess = ''; }, 2500);
+        this.cancel();
+      } catch (e) {
+        console.error('[admin] save error:', e);
+        this.saveError = this._explainError(e);
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    async remove(type, i) {
+      if (!confirm('Delete this item? This cannot be undone.')) return;
+      this.busy = true;
+      try {
+        await D.deleteItem(type, this[type][i].id);
+        this[type] = this[type].filter((_,idx) => idx !== i);
+      } catch (e) {
+        alert('Delete failed: ' + (e.message || e));
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    async togglePublished(i) {
+      const art = this.articles[i];
+      const update = { published: !art.published };
+      if (update.published && !art.published_at) update.published_at = new Date().toISOString();
+      try {
+        const updated = await D.updateItem('articles', art.id, { ...art, ...update });
+        this.articles = this.articles.map((x,idx) => idx === i ? updated : x);
+      } catch (e) { alert('Update failed: ' + (e.message || e)); }
+    },
+
+    async toggleFeatured(i) {
+      const art = this.articles[i];
+      try {
+        const updated = await D.updateItem('articles', art.id, { ...art, featured: !art.featured });
+        this.articles = this.articles.map((x,idx) => idx === i ? updated : x);
+      } catch (e) { alert('Update failed: ' + (e.message || e)); }
+    },
+
+    async markMsgRead(i) {
+      const msg = this.messages[i];
+      if (msg.read) return;
+      try {
+        await D.updateItem('messages', msg.id, { read: true });
+        this.messages = this.messages.map((x,idx) => idx === i ? { ...x, read:true } : x);
+      } catch (e) { console.error(e); }
+    },
+
+    async markInqRead(i) {
+      const inq = this.inquiries[i];
+      if (inq.read) return;
+      try {
+        await D.updateItem('inquiries', inq.id, { read: true });
+        this.inquiries = this.inquiries.map((x,idx) => idx === i ? { ...x, read:true } : x);
+      } catch (e) { console.error(e); }
+    },
+
+    async saveSettings() {
+      this.settingsBusy = true; this.settingsSaved = false;
+      try {
+        await D.saveSettings({
+          tagline:         (this.settings.tagline         || '').trim(),
+          about_text:      (this.settings.about_text      || '').trim(),
+          contact_email:   (this.settings.contact_email   || '').trim(),
+          contact_phone:   (this.settings.contact_phone   || '').trim(),
+          contact_address: (this.settings.contact_address || '').trim(),
+          whatsapp:        (this.settings.whatsapp        || '').trim(),
+          facebook:        (this.settings.facebook        || '').trim(),
+          twitter:         (this.settings.twitter         || '').trim(),
+          instagram:       (this.settings.instagram       || '').trim(),
+        });
+        this.settingsSaved = true;
+        setTimeout(() => { this.settingsSaved = false; }, 2500);
+      } catch (e) {
+        alert('Could not save settings: ' + (e.message || e));
+      } finally {
+        this.settingsBusy = false;
+      }
+    },
+
+    // ── photo upload ───────────────────────────────────────────────────────
+    async onCoverFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!this._validateImage(file)) { e.target.value=''; return; }
+      this.uploadBusy = true;
+      this.uploadStatus = 'Uploading cover image…';
+      try {
+        this.draft.cover_image = await D.uploadPhoto(file);
+        this.uploadStatus = '';
+      } catch (err) {
+        this.uploadStatus = '';
+        alert(this._explainUploadError(err));
+      } finally {
+        this.uploadBusy = false; e.target.value='';
+      }
+    },
+
+    _validateImage(file) {
+      if (file.size > 10*1024*1024) { alert('Image is over 10 MB. Please compress it first (tinypng.com).'); return false; }
+      if (!/^image\//.test(file.type)) { alert('Please pick an image file (JPG, PNG, WebP).'); return false; }
+      return true;
+    },
+    _explainUploadError(err) {
+      const msg = (err && (err.message || '')).toLowerCase();
+      if (msg.includes('bucket'))  return 'Upload failed — "photos" storage bucket missing in Supabase. Create it as a public bucket in Dashboard → Storage.';
+      if (msg.includes('policy') || msg.includes('403')) return 'Upload failed — not authorised. Make sure your admin_users row has is_admin = true.';
+      return 'Upload failed: ' + (err?.message || 'Unknown error');
+    },
+    _explainError(err) {
+      const msg = (err && (err.message || '')).toLowerCase();
+      if (msg.includes('unique') || msg.includes('duplicate')) return 'A record with that slug or name already exists. Choose a different one.';
+      if (msg.includes('policy') || msg.includes('rls')) return 'Save blocked by Supabase policy — make sure your admin_users.is_admin is true, then sign out and back in.';
+      if (msg.includes('not-null') || msg.includes('violates')) return 'A required field is missing. Check all fields and try again.';
+      return 'Save failed: ' + (err?.message || 'Unknown error. Check the browser console.');
+    },
+
+    // ── computed helpers ───────────────────────────────────────────────────
+    get unreadMessages()  { return this.messages.filter(m => !m.read).length; },
+    get unreadInquiries() { return this.inquiries.filter(i => !i.read).length; },
+    get publishedCount()  { return this.articles.filter(a => a.published).length; },
+    get draftCount()      { return this.articles.filter(a => !a.published).length; },
+
+    fmtDate(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' });
+    },
+    fmtDateTime(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleString('en-NG', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    },
+  };
+}
+</script>
+</head>
+<body x-data="admin()" x-init="init()">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════════════════════════════════ -->
+<template x-if="!authed">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="login-brand-name">National <span>Detective</span></div>
+        <div class="login-brand-tag">Magazine · Admin Panel</div>
+      </div>
+      <h2 class="login-title">Sign In</h2>
+      <p class="login-sub">Enter your admin credentials to manage the magazine.</p>
+
+      <div x-show="pwError" class="alert alert-error" x-text="pwError"></div>
+
+      <form @submit.prevent="tryLogin()" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" placeholder="admin@example.com" x-model="email" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" placeholder="••••••••" x-model="pw" autocomplete="current-password"/>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" :class="{busy:loginBusy}">
+          <template x-if="loginBusy"><span class="spinner white"></span></template>
+          <template x-if="!loginBusy">Sign In</template>
+        </button>
+      </form>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+        <a href="index.html" style="font-size:12px;color:var(--muted);text-decoration:none;">← Back to website</a>
+        <button @click="forceClear()" style="float:right;font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;padding:0;">Clear session</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ADMIN PANEL
+════════════════════════════════════════════════════════════════ -->
+<template x-if="authed">
+  <div class="admin-wrap">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-brand">
+        <div class="admin-sidebar-brand-name">National <span>Detective</span></div>
+        <div class="admin-sidebar-brand-tag">Admin Panel</div>
+        <div class="admin-sidebar-badge">CMS</div>
+      </div>
+
+      <nav class="admin-nav">
+        <div class="admin-nav-section">Content</div>
+        <button class="admin-nav-item" :class="{active:tab==='articles'}" @click="tab='articles';cancel()">
+          Articles
+          <span class="admin-nav-count" x-text="articles.length"></span>
+        </button>
+        <button class="admin-nav-item" :class="{active:tab==='categories'}" @click="tab='categories';cancel()">
+          Categories
+          <span class="admin-nav-count" x-text="categories.length"></span>
+        </button>
+
+        <div class="admin-nav-section">Inbox</div>
+        <button class="admin-nav-item" :class="{active:tab==='messages'}" @click="tab='messages';cancel()">
+          Messages
+          <span class="admin-nav-count" :class="{unread:unreadMessages>0}" x-show="messages.length > 0" x-text="unreadMessages > 0 ? unreadMessages+' new' : messages.length"></span>
+        </button>
+        <button class="admin-nav-item" :class="{active:tab==='inquiries'}" @click="tab='inquiries';cancel()">
+          Ad Enquiries
+          <span class="admin-nav-count" :class="{unread:unreadInquiries>0}" x-show="inquiries.length > 0" x-text="unreadInquiries > 0 ? unreadInquiries+' new' : inquiries.length"></span>
+        </button>
+
+        <div class="admin-nav-section">Site</div>
+        <button class="admin-nav-item" :class="{active:tab==='settings'}" @click="tab='settings';cancel()">
+          Settings
+        </button>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;">
+          <a href="index.html" style="color:rgba(255,255,255,0.45);text-decoration:none;">← View Site</a>
+        </div>
+        <button @click="logout()">Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- ── MAIN ── -->
+    <main class="admin-main">
+
+      <!-- Global success/error banners -->
+      <div x-show="saveSuccess" class="alert alert-success" x-text="saveSuccess"></div>
+      <div x-show="saveError && !editing" class="alert alert-error" x-text="saveError"></div>
+
+      <!-- ══════════ ARTICLES TAB ══════════ -->
+      <div x-show="tab==='articles'">
+
+        <!-- Stats row -->
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-card-label">Total Articles</div><div class="stat-card-num" x-text="articles.length"></div></div>
+          <div class="stat-card"><div class="stat-card-label">Published</div><div class="stat-card-num" x-text="publishedCount"></div></div>
+          <div class="stat-card"><div class="stat-card-label">Drafts</div><div class="stat-card-num red" x-text="draftCount"></div></div>
+          <div class="stat-card"><div class="stat-card-label">Categories</div><div class="stat-card-num" x-text="categories.length"></div></div>
+        </div>
+
+        <!-- EDITOR -->
+        <template x-if="editing !== null && editingType === 'articles'">
+          <div class="editor-panel">
+            <h3 x-text="editing === 'new' ? '+ New Article' : 'Edit Article'"></h3>
+
+            <div x-show="saveError" class="alert alert-error" x-text="saveError"></div>
+
+            <!-- Title + slug -->
+            <div class="form-group">
+              <label class="form-label">Headline / Title *</label>
+              <input type="text" class="form-input" placeholder="Enter the article headline…" x-model="draft.title" @input="onTitleChange()" style="font-size:16px;font-weight:600;"/>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">URL Slug *</label>
+                <input type="text" class="form-input" placeholder="url-friendly-slug" x-model="draft.slug"/>
+                <span class="form-hint">URL: article.html?slug=<span x-text="draft.slug||'…'"></span></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category</label>
+                <select class="form-select" x-model="draft.category_id" @change="onCategoryChange()">
+                  <option value="">— No category —</option>
+                  <template x-for="cat in categories" :key="cat.id">
+                    <option :value="cat.id" x-text="cat.name"></option>
+                  </template>
+                </select>
+              </div>
+            </div>
+
+            <!-- Excerpt -->
+            <div class="form-group">
+              <label class="form-label">Excerpt / Summary</label>
+              <textarea class="form-textarea" placeholder="A short 1–2 sentence summary shown on article cards and search results." x-model="draft.excerpt" rows="3"></textarea>
+            </div>
+
+            <!-- Content -->
+            <div class="form-group">
+              <label class="form-label">Full Article Content</label>
+              <textarea class="form-textarea content" placeholder="Write the full article here. You can use basic HTML tags: &lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;blockquote&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;a href=''&gt;…" x-model="draft.content" rows="18"></textarea>
+              <span class="form-hint">Supports HTML. Wrap paragraphs in &lt;p&gt; tags. Use &lt;blockquote&gt; for pull quotes.</span>
+            </div>
+
+            <!-- Cover image -->
+            <div class="form-group">
+              <label class="form-label">Cover Image</label>
+              <div class="upload-zone" @click="$refs.coverFile.click()" :class="{busy:uploadBusy}">
+                <template x-if="!draft.cover_image">
+                  <div>
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--crimson);margin-bottom:8px;text-transform:uppercase;">Upload Image</div>
+                    <p style="font-size:13px;color:var(--muted);">Click to upload a cover image (JPG, PNG, WebP — max 10 MB)</p>
+                    <template x-if="uploadStatus"><p style="font-size:12px;color:var(--crimson);margin-top:4px;" x-text="uploadStatus"></p></template>
+                  </div>
+                </template>
+                <template x-if="draft.cover_image">
+                  <div>
+                    <img :src="draft.cover_image" class="upload-preview" alt="Cover"/>
+                    <button @click.stop="draft.cover_image=''" style="font-size:11px;color:var(--crimson);background:none;border:none;cursor:pointer;margin-top:6px;">Remove image</button>
+                  </div>
+                </template>
+              </div>
+              <input type="file" accept="image/*" x-ref="coverFile" style="display:none" @change="onCoverFile($event)"/>
+            </div>
+
+            <!-- Author + Date -->
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Author Name</label>
+                <input type="text" class="form-input" placeholder="NDM Staff" x-model="draft.author_name"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Publish Date</label>
+                <input type="datetime-local" class="form-input" x-model="draft.published_at"/>
+              </div>
+            </div>
+
+            <!-- Toggles -->
+            <div style="display:flex;gap:24px;margin:8px 0 20px;flex-wrap:wrap;">
+              <label class="form-check-row">
+                <input type="checkbox" x-model="draft.published"/> Published (visible on the website)
+              </label>
+              <label class="form-check-row">
+                <input type="checkbox" x-model="draft.featured"/> Featured (shown in homepage hero)
+              </label>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--border-light);">
+              <button class="btn btn-primary" :class="{busy}" @click="save()">
+                <template x-if="busy"><span class="spinner white"></span></template>
+                <template x-if="!busy" x-text="editing==='new' ? 'Publish Article' : 'Save Changes'"></template>
+              </button>
+              <button class="btn btn-secondary" @click="cancel()">Cancel</button>
+            </div>
+          </div>
+        </template>
+
+        <!-- TOP BAR -->
+        <div class="admin-topbar">
+          <h2>Articles</h2>
+          <div class="admin-topbar-right">
+            <button class="btn btn-primary" @click="newItem('articles')">+ New Article</button>
+          </div>
+        </div>
+
+        <!-- ARTICLE LIST -->
+        <div class="item-list" x-show="articles.length > 0">
+          <template x-for="(art, i) in articles" :key="art.id">
+            <div class="item-card">
+              <div class="item-thumb">
+                <template x-if="art.cover_image">
+                  <img :src="art.cover_image" :alt="art.title" loading="lazy"/>
+                </template>
+                <template x-if="!art.cover_image">📰</template>
+              </div>
+              <div class="item-info">
+                <h4 x-text="art.title"></h4>
+                <div class="item-meta">
+                  <span x-text="fmtDate(art.published_at || art.created_at)"></span>
+                  <span x-text="art.category_name || '—'"></span>
+                  <span class="status-badge" :class="art.published ? 'published' : 'draft'" x-text="art.published ? 'Published' : 'Draft'"></span>
+                  <span class="status-badge featured" x-show="art.featured">Featured</span>
+                  <span x-show="art.views > 0" style="color:var(--muted);" x-text="'👁 ' + Number(art.views||0).toLocaleString()"></span>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="icon-btn" @click="togglePublished(i)" x-text="art.published ? 'Unpublish' : 'Publish'"></button>
+                <button class="icon-btn" :class="{success:art.featured}" @click="toggleFeatured(i)" x-text="art.featured ? '★ Featured' : '☆ Feature'"></button>
+                <button class="icon-btn" @click="edit('articles',i)">Edit</button>
+                <button class="icon-btn danger" @click="remove('articles',i)">Delete</button>
+              </div>
+            </div>
+          </template>
+        </div>
+        <div x-show="articles.length === 0" style="text-align:center;padding:48px;color:var(--muted);">
+          <div style="font-family:'Playfair Display',serif;font-size:32px;font-style:italic;font-weight:700;color:var(--crimson);opacity:0.3;margin-bottom:12px;">NDM</div>
+          <p>No articles yet. Click <strong>+ New Article</strong> to create your first story.</p>
+        </div>
+      </div>
+
+      <!-- ══════════ CATEGORIES TAB ══════════ -->
+      <div x-show="tab==='categories'">
+        <!-- Editor -->
+        <template x-if="editing !== null && editingType === 'categories'">
+          <div class="editor-panel">
+            <h3 x-text="editing === 'new' ? '+ New Category' : 'Edit Category'"></h3>
+            <div x-show="saveError" class="alert alert-error" x-text="saveError"></div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Category Name *</label>
+                <input type="text" class="form-input" placeholder="e.g. Politics" x-model="draft.name" @input="onTitleChange()"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">URL Slug *</label>
+                <input type="text" class="form-input" placeholder="e.g. politics" x-model="draft.slug"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <input type="text" class="form-input" placeholder="Brief description (shown on category pages)" x-model="draft.description"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Accent Colour</label>
+              <div class="color-swatches">
+                <template x-for="color in ['#B91C1C','#7C3AED','#1D4ED8','#B45309','#065F46','#BE185D','#0369A1','#374151','#D97706','#0F766E']" :key="color">
+                  <div class="color-swatch" :class="{selected: draft.color===color}" :style="'background:'+color" @click="draft.color=color" :title="color"></div>
+                </template>
+              </div>
+              <input type="text" class="form-input" placeholder="#B91C1C" x-model="draft.color" style="margin-top:8px;width:160px;" @input=""/>
+            </div>
+            <div style="display:flex;gap:10px;padding-top:8px;border-top:1px solid var(--border-light);">
+              <button class="btn btn-primary" :class="{busy}" @click="save()">
+                <template x-if="busy"><span class="spinner white"></span></template>
+                <template x-if="!busy" x-text="editing==='new' ? 'Create Category' : 'Save Changes'"></template>
+              </button>
+              <button class="btn btn-secondary" @click="cancel()">Cancel</button>
+            </div>
+          </div>
+        </template>
+
+        <div class="admin-topbar">
+          <h2>Categories</h2>
+          <button class="btn btn-primary" @click="newItem('categories')">+ New Category</button>
+        </div>
+
+        <div class="item-list">
+          <template x-for="(cat, i) in categories" :key="cat.id">
+            <div class="item-card">
+              <div class="item-thumb" :style="'background:'+cat.color+'22;'">
+                <span :style="'color:'+cat.color+';font-size:22px;font-weight:700;font-family:Playfair Display,serif;'" x-text="cat.name.charAt(0)"></span>
+              </div>
+              <div class="item-info">
+                <h4 x-text="cat.name"></h4>
+                <div class="item-meta">
+                  <span x-text="'/news.html?cat='+cat.slug"></span>
+                  <span x-show="cat.description" x-text="cat.description"></span>
+                  <span :style="'background:'+cat.color+'22;color:'+cat.color+';padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;'" x-text="cat.color"></span>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="icon-btn" @click="edit('categories',i)">Edit</button>
+                <button class="icon-btn danger" @click="remove('categories',i)">Delete</button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- ══════════ MESSAGES TAB ══════════ -->
+      <div x-show="tab==='messages'">
+        <div class="admin-topbar">
+          <h2>Contact Messages</h2>
+          <span style="font-size:13px;color:var(--muted);" x-text="unreadMessages + ' unread of ' + messages.length + ' total'"></span>
+        </div>
+
+        <div x-show="messages.length === 0" style="text-align:center;padding:48px;color:var(--muted);">
+          <p style="margin-bottom:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;">Inbox empty</p>
+          <p>Messages from the contact form will appear here.</p>
+        </div>
+
+        <template x-for="(msg, i) in messages" :key="msg.id">
+          <div class="msg-card" :class="{unread:!msg.read}" @click="markMsgRead(i)">
+            <div class="msg-header">
+              <div class="msg-sender">
+                <h4 x-text="msg.name"></h4>
+                <div class="msg-email">
+                  <a :href="'mailto:'+msg.email" x-text="msg.email" @click.stop></a>
+                  <span x-show="msg.phone" x-text="' · ' + msg.phone"></span>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <span class="msg-time" x-text="fmtDateTime(msg.created_at)"></span>
+                <span class="status-badge" :class="msg.read ? 'read' : 'unread'" x-text="msg.read ? 'Read' : 'New'"></span>
+              </div>
+            </div>
+            <div class="msg-subject" x-show="msg.subject" x-text="msg.subject"></div>
+            <div class="msg-body" x-text="msg.message"></div>
+            <div class="msg-actions">
+              <a :href="'mailto:'+msg.email+'?subject=Re: '+(msg.subject||'Your message')" class="btn btn-secondary btn-sm" @click.stop>↩ Reply by email</a>
+              <button class="btn btn-sm" style="background:#F0FDF4;color:#16A34A;border:1px solid #BBF7D0;" @click.stop="markMsgRead(i)" x-show="!msg.read">Mark read</button>
+              <button class="btn btn-danger btn-sm" @click.stop="remove('messages',i)">Delete</button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- ══════════ INQUIRIES TAB ══════════ -->
+      <div x-show="tab==='inquiries'">
+        <div class="admin-topbar">
+          <h2>Advertising Enquiries</h2>
+          <span style="font-size:13px;color:var(--muted);" x-text="unreadInquiries + ' unread of ' + inquiries.length + ' total'"></span>
+        </div>
+
+        <div x-show="inquiries.length === 0" style="text-align:center;padding:48px;color:var(--muted);">
+          <p style="margin-bottom:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;">No enquiries yet</p>
+          <p>Advertising enquiries from the website will appear here.</p>
+        </div>
+
+        <template x-for="(inq, i) in inquiries" :key="inq.id">
+          <div class="msg-card" :class="{unread:!inq.read}" @click="markInqRead(i)">
+            <div class="msg-header">
+              <div class="msg-sender">
+                <h4 x-text="inq.name + (inq.company ? ' — ' + inq.company : '')"></h4>
+                <div class="msg-email">
+                  <a :href="'mailto:'+inq.email" x-text="inq.email" @click.stop></a>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <span class="msg-time" x-text="fmtDateTime(inq.created_at)"></span>
+                <span class="status-badge" :class="inq.read ? 'read' : 'unread'" x-text="inq.read ? 'Read' : 'New'"></span>
+              </div>
+            </div>
+            <div class="msg-subject" x-show="inq.ad_type || inq.budget">
+              <span x-show="inq.ad_type" x-text="inq.ad_type"></span>
+              <span x-show="inq.budget" x-text="' · Budget: ' + inq.budget"></span>
+            </div>
+            <div class="msg-body" x-show="inq.message" x-text="inq.message"></div>
+            <div class="msg-actions">
+              <a :href="'mailto:'+inq.email+'?subject=Re: Advertising Enquiry'" class="btn btn-secondary btn-sm" @click.stop>↩ Reply</a>
+              <button class="btn btn-sm" style="background:#F0FDF4;color:#16A34A;border:1px solid #BBF7D0;" @click.stop="markInqRead(i)" x-show="!inq.read">Mark read</button>
+              <button class="btn btn-danger btn-sm" @click.stop="remove('inquiries',i)">Delete</button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- ══════════ SETTINGS TAB ══════════ -->
+      <div x-show="tab==='settings'">
+        <div class="admin-topbar">
+          <h2>Site Settings</h2>
+          <button class="btn btn-primary" :class="{busy:settingsBusy}" @click="saveSettings()">
+            <template x-if="settingsBusy"><span class="spinner white"></span></template>
+            <template x-if="!settingsBusy">Save All Settings</template>
+          </button>
+        </div>
+        <div x-show="settingsSaved" class="alert alert-success">✓ Settings saved successfully!</div>
+
+        <div class="settings-section">
+          <h3>Magazine Identity</h3>
+          <div class="form-group">
+            <label class="form-label">Tagline</label>
+            <input type="text" class="form-input" placeholder="Uncovering the Truth, Every Day" x-model="settings.tagline"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">About Text <span style="font-weight:400;font-family:inherit;">(shown in footer and about section)</span></label>
+            <textarea class="form-textarea" placeholder="A short description of National Detective Magazine…" x-model="settings.about_text" rows="4"></textarea>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Contact Information</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-input" placeholder="info@nationaldetective.ng" x-model="settings.contact_email"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" class="form-input" placeholder="+234..." x-model="settings.contact_phone"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Office Address</label>
+            <input type="text" class="form-input" placeholder="Street, City, State, Nigeria" x-model="settings.contact_address"/>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Social Media Links</h3>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Enter full URLs or leave blank to hide the links.</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Facebook</label>
+              <input type="url" class="form-input" placeholder="https://facebook.com/nationaldetective" x-model="settings.facebook"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Twitter / X</label>
+              <input type="url" class="form-input" placeholder="https://twitter.com/ndmmagazine" x-model="settings.twitter"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Instagram</label>
+              <input type="url" class="form-input" placeholder="https://instagram.com/nationaldetective" x-model="settings.instagram"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">WhatsApp Number</label>
+              <input type="tel" class="form-input" placeholder="2348012345678 (no +, no spaces)" x-model="settings.whatsapp"/>
+              <span class="form-hint">Used for WhatsApp chat links. Format: country code + number, no + or spaces.</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:8px;">
+          <button class="btn btn-primary btn-lg" :class="{busy:settingsBusy}" @click="saveSettings()">
+            <template x-if="settingsBusy"><span class="spinner white"></span></template>
+            <template x-if="!settingsBusy">Save All Settings</template>
+          </button>
+        </div>
+      </div>
+
+    </main><!-- end admin-main -->
+  </div><!-- end admin-wrap -->
+</template>
+
+</body>
+</html>

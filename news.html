@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>All News — National Detective Magazine</title>
+<meta name="description" content="Browse all news and investigations from National Detective Magazine."/>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="assets/style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/ndm-config.js"></script>
+<script src="assets/ndm-data.js"></script>
+<script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
+</head>
+<body x-data="newsPage()" x-init="init()">
+
+<!-- ═══════ NAV ═══════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="nav-brand-name">National <span>Detective</span></span>
+      <span class="nav-brand-tag">Magazine · Est. Nigeria</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html"     class="nav-link">Home</a>
+      <a href="news.html"      class="nav-link active">News</a>
+      <a href="contact.html"   class="nav-link">Contact</a>
+      <a href="advertise.html" class="nav-link">Advertise</a>
+    </div>
+    <span class="nav-live"><span class="nav-live-dot"></span> Live</span>
+    <button class="nav-burger" @click="navOpen=!navOpen" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-mobile" :class="{open:navOpen}">
+    <a href="index.html"     class="nav-link">Home</a>
+    <a href="news.html"      class="nav-link active">News</a>
+    <a href="contact.html"   class="nav-link">Contact</a>
+    <a href="advertise.html" class="nav-link">Advertise</a>
+  </div>
+</nav>
+
+<!-- ═══════ PAGE HEADER ═══════ -->
+<div class="page-wrap">
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="index.html">Home</a> <span>/</span> <span>News</span>
+      </div>
+      <div class="section-label">All Stories</div>
+      <h1 x-text="activeCategory ? activeCategoryName : 'Latest News'"></h1>
+      <p x-text="activeCategory ? ('Showing all stories in ' + activeCategoryName) : 'Every story, investigation, and analysis — all in one place.'"></p>
+    </div>
+  </div>
+
+  <!-- ═══════ SEARCH + FILTER ═══════ -->
+  <div style="background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:68px;z-index:50;">
+    <div class="container" style="padding-top:16px;padding-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <!-- Search -->
+        <div style="position:relative;flex:1;min-width:200px;">
+          <input type="text" class="form-input" placeholder="Search stories…"
+            x-model="searchQuery" @input.debounce.400ms="onSearch()"/>
+        </div>
+        <!-- Category filter -->
+        <div class="cat-bar" style="flex-shrink:0;">
+          <button class="cat-btn" :class="{active:activeCategory===null}" @click="setCategory(null)">All</button>
+          <template x-for="cat in categories" :key="cat.id">
+            <button class="cat-btn" :class="{active:activeCategory===cat.slug}" @click="setCategory(cat.slug)" x-text="cat.name"></button>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ ARTICLE GRID ═══════ -->
+  <section class="news-section">
+    <div class="container">
+
+      <!-- Result count -->
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:28px;" x-show="!loading" x-text="articles.length + ' stor' + (articles.length===1?'y':'ies') + (activeCategory ? ' in ' + activeCategoryName : '') + (searchQuery ? ' matching "'+searchQuery+'"' : '')"></p>
+
+      <!-- Loading skeletons -->
+      <template x-if="loading">
+        <div class="news-grid">
+          <template x-for="i in 9" :key="i">
+            <div class="skeleton-card">
+              <div class="skeleton skeleton-img"></div>
+              <div class="skeleton-body">
+                <div class="skeleton skeleton-line short"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line medium"></div>
+                <div class="skeleton skeleton-line short"></div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <!-- Articles -->
+      <template x-if="!loading">
+        <template x-if="articles.length > 0">
+          <div class="news-grid" id="articles-grid">
+            <template x-for="art in articles" :key="art.id">
+              <a :href="'article.html?slug=' + art.slug" class="article-card">
+                <div class="article-card-img">
+                  <template x-if="art.cover_image">
+                    <img :src="art.cover_image" :alt="art.title" loading="lazy"/>
+                  </template>
+                  <template x-if="!art.cover_image">
+                    <div class="article-card-placeholder"></div>
+                  </template>
+                </div>
+                <div class="article-card-body">
+                  <div class="article-card-meta">
+                    <span class="cat-badge" :style="art.category_color ? 'background:'+art.category_color+'22;color:'+art.category_color : ''" x-text="art.category_name || 'News'"></span>
+                    <span class="article-card-date" x-text="fmtDate(art.published_at)"></span>
+                  </div>
+                  <h3 class="article-card-title" x-text="art.title"></h3>
+                  <p class="article-card-excerpt" x-text="art.excerpt"></p>
+                  <div class="article-card-author">
+                    <div class="article-card-author-avatar" x-text="(art.author_name||'N').charAt(0)"></div>
+                    <span x-text="art.author_name || 'NDM Staff'"></span>
+                    <span class="views-badge" style="margin-left:auto;" x-show="art.views > 0">
+                      👁 <span x-text="fmtNum(art.views)"></span>
+                    </span>
+                  </div>
+                </div>
+              </a>
+            </template>
+          </div>
+        </template>
+        <template x-if="articles.length === 0">
+          <div class="empty-state">
+            <div class="empty-state-icon"><span>NDM</span></div>
+            <h3>No stories found</h3>
+            <p x-text="searchQuery ? 'Try a different search term.' : 'No articles published in this category yet.'"></p>
+            <button class="btn btn-secondary btn-sm" style="margin-top:8px;" @click="clearFilters()">Clear filters</button>
+          </div>
+        </template>
+      </template>
+
+      <!-- Load more -->
+      <div style="text-align:center;margin-top:48px;" x-show="!loading && canLoadMore">
+        <button class="btn btn-secondary" :class="{busy:loadingMore}" @click="loadMore()">
+          <template x-if="loadingMore"><span class="spinner"></span></template>
+          <template x-if="!loadingMore">Load more stories</template>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ FOOTER ═══════ -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-brand-name">National <span>Detective</span></div>
+          <div class="footer-brand-tag">Magazine · Nigeria</div>
+          <p>Nigeria's foremost investigative news publication.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Sections</h5>
+          <template x-for="cat in categories.slice(0,5)" :key="cat.id">
+            <a :href="'news.html?cat='+cat.slug" x-text="cat.name"></a>
+          </template>
+        </div>
+        <div class="footer-col">
+          <h5>Magazine</h5>
+          <a href="index.html">Home</a>
+          <a href="news.html">All News</a>
+          <a href="advertise.html">Advertise</a>
+          <a href="contact.html">Contact Us</a>
+        </div>
+        <div class="footer-col">
+          <h5>Legal</h5>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Use</a>
+          <a href="admin.html">Admin</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p x-text="'© ' + currentYear + ' National Detective Magazine.'"></p>
+      </div>
+    </div>
+  </footer>
+</div><!-- end page-wrap -->
+
+<script>
+function newsPage() {
+  const D = window.NDMData;
+  return {
+    navOpen: false,
+    loading: true,
+    loadingMore: false,
+    articles: [],
+    categories: [],
+    activeCategory: null,
+    activeCategoryName: '',
+    searchQuery: '',
+    pageSize: 12,
+    offset: 0,
+    canLoadMore: false,
+    currentYear: new Date().getFullYear(),
+
+    async init() {
+      // Pick up ?cat= query param
+      const params = new URLSearchParams(location.search);
+      const catParam = params.get('cat');
+
+      this.categories = await D.getCategories();
+
+      if (catParam) {
+        const found = this.categories.find(c => c.slug === catParam);
+        if (found) { this.activeCategory = catParam; this.activeCategoryName = found.name; }
+      }
+
+      await this.fetchArticles(true);
+    },
+
+    async fetchArticles(reset = false) {
+      if (reset) { this.offset = 0; this.loading = true; }
+      else this.loadingMore = true;
+
+      const batch = await D.getPublishedArticles({
+        limit: this.pageSize + 1,
+        offset: this.offset,
+        categorySlug: this.activeCategory,
+      });
+
+      // +1 trick to know if there are more
+      this.canLoadMore = batch.length > this.pageSize;
+      const page = batch.slice(0, this.pageSize);
+
+      if (reset) this.articles = page;
+      else        this.articles = [...this.articles, ...page];
+
+      this.loading    = false;
+      this.loadingMore = false;
+    },
+
+    async setCategory(slug) {
+      this.activeCategory = slug;
+      const found = slug ? this.categories.find(c => c.slug === slug) : null;
+      this.activeCategoryName = found ? found.name : '';
+      this.searchQuery = '';
+      await this.fetchArticles(true);
+    },
+
+    async onSearch() {
+      // Client-side filter on already-loaded data for now
+      // For a larger publication, you'd add full-text search via Supabase
+      if (!this.searchQuery.trim()) {
+        await this.fetchArticles(true);
+        return;
+      }
+      this.loading = true;
+      const all = await D.getPublishedArticles({ limit: 200, offset: 0, categorySlug: this.activeCategory });
+      const q = this.searchQuery.toLowerCase();
+      this.articles = all.filter(a =>
+        (a.title || '').toLowerCase().includes(q) ||
+        (a.excerpt || '').toLowerCase().includes(q)
+      );
+      this.canLoadMore = false;
+      this.loading = false;
+    },
+
+    async loadMore() {
+      this.offset += this.pageSize;
+      await this.fetchArticles(false);
+    },
+
+    clearFilters() {
+      this.activeCategory = null;
+      this.activeCategoryName = '';
+      this.searchQuery = '';
+      this.fetchArticles(true);
+    },
+
+    fmtDate(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' });
+    },
+    fmtNum(n) {
+      if (!n) return '0';
+      return Number(n).toLocaleString('en-NG');
+    },
+  };
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Advertise with Us — National Detective Magazine</title>
+<meta name="description" content="Reach Nigeria's most engaged news audience. Advertise with National Detective Magazine."/>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="assets/style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/ndm-config.js"></script>
+<script src="assets/ndm-data.js"></script>
+<script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
+</head>
+<body x-data="advertisePage()" x-init="init()">
+
+<!-- ═══════ NAV ═══════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="nav-brand-name">National <span>Detective</span></span>
+      <span class="nav-brand-tag">Magazine · Est. Nigeria</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html"     class="nav-link">Home</a>
+      <a href="news.html"      class="nav-link">News</a>
+      <a href="contact.html"   class="nav-link">Contact</a>
+      <a href="advertise.html" class="nav-link active">Advertise</a>
+    </div>
+    <span class="nav-live"><span class="nav-live-dot"></span> Live</span>
+    <button class="nav-burger" @click="navOpen=!navOpen" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-mobile" :class="{open:navOpen}">
+    <a href="index.html"     class="nav-link">Home</a>
+    <a href="news.html"      class="nav-link">News</a>
+    <a href="contact.html"   class="nav-link">Contact</a>
+    <a href="advertise.html" class="nav-link active">Advertise</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- ═══════ HEADER ═══════ -->
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="index.html">Home</a> <span>/</span> <span>Advertise</span>
+      </div>
+      <div class="section-label">Advertising</div>
+      <h1>Advertise with Us</h1>
+      <p>Reach a highly engaged, educated Nigerian audience that cares about news, justice, and accountability.</p>
+    </div>
+  </div>
+
+  <!-- ═══════ AUDIENCE STATS ═══════ -->
+  <section style="padding:56px 0;background:var(--surface);border-bottom:1px solid var(--border);">
+    <div class="container">
+      <div class="section-label">Our Reach</div>
+      <h2 class="section-title" style="margin-bottom:32px;">Why Advertise Here?</h2>
+      <div class="ad-stats">
+        <div class="ad-stat">
+          <div class="ad-stat-num">50K+</div>
+          <div class="ad-stat-label">Monthly Readers</div>
+        </div>
+        <div class="ad-stat">
+          <div class="ad-stat-num">8min</div>
+          <div class="ad-stat-label">Avg. Time on Site</div>
+        </div>
+        <div class="ad-stat">
+          <div class="ad-stat-num">72%</div>
+          <div class="ad-stat-label">Mobile Audience</div>
+        </div>
+        <div class="ad-stat">
+          <div class="ad-stat-num">NG</div>
+          <div class="ad-stat-label">Primary Audience</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ AD PACKAGES ═══════ -->
+  <section style="padding:64px 0;background:var(--elevated);">
+    <div class="container">
+      <div class="section-label">Packages</div>
+      <h2 class="section-title">Advertising Options</h2>
+      <p class="section-sub" style="margin-bottom:48px;">Choose the format that works best for your business. All packages include performance reports.</p>
+      <div class="ad-packages">
+        <div class="ad-package">
+          <div class="ad-package-name">Starter</div>
+          <h3>Banner Ads</h3>
+          <p>Display your brand across our most-read pages with standard display advertising.</p>
+          <ul class="ad-package-features">
+            <li>Homepage banner placement</li>
+            <li>Article page sidebar</li>
+            <li>Mobile-optimised formats</li>
+            <li>Weekly performance report</li>
+          </ul>
+          <button class="btn btn-ghost btn-full" style="margin-top:16px;" @click="prefillPackage('Banner Ads')">Get a Quote →</button>
+        </div>
+        <div class="ad-package" style="border-color:var(--crimson);box-shadow:0 8px 32px rgba(185,28,28,0.1);">
+          <div class="ad-package-name">Most Popular</div>
+          <h3>Sponsored Content</h3>
+          <p>Your brand story, told in the National Detective voice. Native articles that engage and inform.</p>
+          <ul class="ad-package-features">
+            <li>Full editorial-style article</li>
+            <li>Promoted on homepage</li>
+            <li>Social media amplification</li>
+            <li>30-day archive placement</li>
+            <li>Detailed analytics</li>
+          </ul>
+          <button class="btn btn-primary btn-full" style="margin-top:16px;" @click="prefillPackage('Sponsored Content')">Get a Quote →</button>
+        </div>
+        <div class="ad-package">
+          <div class="ad-package-name">Enterprise</div>
+          <h3>Brand Partnership</h3>
+          <p>Full-scale partnership — from category sponsorship to custom campaigns and event coverage.</p>
+          <ul class="ad-package-features">
+            <li>Category sponsorship</li>
+            <li>Custom branded content</li>
+            <li>Newsletter sponsorship</li>
+            <li>Dedicated account manager</li>
+            <li>Quarterly strategy review</li>
+          </ul>
+          <button class="btn btn-ghost btn-full" style="margin-top:16px;" @click="prefillPackage('Brand Partnership')">Get a Quote →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ INQUIRY FORM ═══════ -->
+  <section style="padding:64px 0;background:var(--surface);" id="enquiry-form">
+    <div class="container" style="max-width:720px;">
+
+      <!-- Success -->
+      <template x-if="submitted">
+        <div style="text-align:center;padding:48px 0;">
+          <div class="success-circle">&#10003;</div>
+          <h2 style="margin-bottom:8px;">Enquiry Received</h2>
+          <p style="color:var(--text-muted);font-size:15px;line-height:1.65;max-width:360px;margin:0 auto 24px;">Thank you for your interest in advertising with us. We'll be in touch within 48 hours with a tailored proposal.</p>
+          <button class="btn btn-secondary" @click="submitted=false;form={name:'',email:'',company:'',budget:'',ad_type:'',message:''}">Submit another enquiry</button>
+        </div>
+      </template>
+
+      <!-- Form -->
+      <template x-if="!submitted">
+        <div>
+          <div class="section-label">Get Started</div>
+          <h2 class="section-title" style="margin-bottom:8px;">Request Advertising Info</h2>
+          <p class="section-sub" style="margin-bottom:36px;">Tell us about your brand and goals. We'll put together a custom proposal just for you.</p>
+
+          <div x-show="error" class="alert alert-error" style="margin-bottom:20px;">
+            <span class="alert-icon">⚠️</span>
+            <span x-text="error"></span>
+          </div>
+
+          <form @submit.prevent="submitForm()" style="display:flex;flex-direction:column;gap:18px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Your Name *</label>
+                <input type="text" class="form-input" placeholder="Full name" x-model="form.name" required/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Address *</label>
+                <input type="email" class="form-input" placeholder="you@company.com" x-model="form.email" required/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Company / Brand</label>
+                <input type="text" class="form-input" placeholder="Your company name" x-model="form.company"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ad Type Interested In</label>
+                <select class="form-select" x-model="form.ad_type">
+                  <option value="">Select…</option>
+                  <option>Banner Ads</option>
+                  <option>Sponsored Content</option>
+                  <option>Brand Partnership</option>
+                  <option>Newsletter Sponsorship</option>
+                  <option>Custom / Not Sure</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Estimated Budget</label>
+              <select class="form-select" x-model="form.budget">
+                <option value="">Select a range…</option>
+                <option>Under ₦50,000</option>
+                <option>₦50,000 – ₦150,000</option>
+                <option>₦150,000 – ₦500,000</option>
+                <option>₦500,000 – ₦1,000,000</option>
+                <option>Over ₦1,000,000</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tell us about your campaign *</label>
+              <textarea class="form-textarea" placeholder="What are your advertising goals? Who is your target audience? Any specific requirements?" x-model="form.message" rows="5" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full btn-lg" :class="{busy:sending}">
+              <template x-if="sending"><span class="spinner white"></span></template>
+              <template x-if="!sending">Submit Advertising Enquiry</template>
+            </button>
+          </form>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <!-- ═══════ FOOTER ═══════ -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-brand-name">National <span>Detective</span></div>
+          <div class="footer-brand-tag">Magazine · Nigeria</div>
+          <p>Nigeria's foremost investigative news publication.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Magazine</h5>
+          <a href="index.html">Home</a>
+          <a href="news.html">All News</a>
+          <a href="advertise.html">Advertise</a>
+          <a href="contact.html">Contact</a>
+        </div>
+        <div class="footer-col"><h5>Legal</h5><a href="#">Privacy Policy</a><a href="#">Terms</a></div>
+        <div class="footer-col"><h5>Admin</h5><a href="admin.html">Admin Panel</a></div>
+      </div>
+      <div class="footer-bottom">
+        <p x-text="'© ' + currentYear + ' National Detective Magazine.'"></p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+function advertisePage() {
+  const D = window.NDMData;
+  return {
+    navOpen: false,
+    form: { name:'', email:'', company:'', budget:'', ad_type:'', message:'' },
+    sending: false,
+    submitted: false,
+    error: '',
+    currentYear: new Date().getFullYear(),
+
+    async init() {},
+
+    prefillPackage(pkg) {
+      this.form.ad_type = pkg;
+      document.getElementById('enquiry-form').scrollIntoView({ behavior:'smooth' });
+    },
+
+    async submitForm() {
+      this.error = '';
+      if (!this.form.name.trim())    { this.error = 'Please enter your name.'; return; }
+      if (!this.form.email.trim())   { this.error = 'Please enter your email.'; return; }
+      if (!this.form.message.trim()) { this.error = 'Please describe your campaign.'; return; }
+      this.sending = true;
+      try {
+        await D.submitAdvertiseInquiry({
+          name:    this.form.name.trim(),
+          email:   this.form.email.trim().toLowerCase(),
+          company: this.form.company.trim() || null,
+          budget:  this.form.budget || null,
+          ad_type: this.form.ad_type || null,
+          message: this.form.message.trim(),
+        });
+        this.submitted = true;
+      } catch (e) {
+        this.error = 'Could not submit your enquiry. Please try again or email us directly.';
+        console.error(e);
+      } finally {
+        this.sending = false;
+      }
+    },
+  };
+}
+</script>
+</body>
+</html>

@@ -8,6 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<!-- Quill rich text editor -->
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -193,6 +196,44 @@ h1,h2,h3,h4 { font-family: 'Playfair Display', serif; font-weight: 700; color: v
   .item-card { grid-template-columns:auto 1fr; grid-template-rows:auto auto; }
   .item-actions { grid-column:1/-1; }
 }
+
+/* ── Quill rich text editor ─────────────────────────────────────────────────── */
+.ql-toolbar.ql-snow {
+  border: 1px solid var(--border) !important;
+  border-bottom: none !important;
+  border-radius: 6px 6px 0 0 !important;
+  background: var(--bg) !important;
+  font-family: 'Inter', sans-serif !important;
+  padding: 8px 12px !important;
+}
+.ql-container.ql-snow {
+  border: 1px solid var(--border) !important;
+  border-radius: 0 0 6px 6px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 15px !important;
+}
+.ql-editor {
+  min-height: 300px;
+  line-height: 1.75 !important;
+  color: var(--ink) !important;
+  padding: 16px 18px !important;
+}
+.ql-editor.ql-blank::before {
+  color: var(--muted) !important;
+  font-style: normal !important;
+  font-size: 14px !important;
+}
+.ql-editor h2 { font-size: 22px !important; margin: 20px 0 10px !important; font-family: 'Playfair Display', serif !important; }
+.ql-editor h3 { font-size: 18px !important; margin: 16px 0 8px !important; font-family: 'Playfair Display', serif !important; }
+.ql-editor p  { margin-bottom: 12px !important; }
+.ql-editor blockquote { border-left: 4px solid var(--crimson) !important; padding-left: 16px !important; color: #555 !important; font-style: italic !important; margin: 16px 0 !important; }
+.ql-snow .ql-picker { color: var(--ink) !important; }
+.ql-snow .ql-stroke { stroke: var(--ink) !important; }
+.ql-snow .ql-fill  { fill:   var(--ink) !important; }
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke: var(--crimson) !important; }
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill  { fill: var(--crimson) !important; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="assets/ndm-config.js"></script>
@@ -306,7 +347,7 @@ function admin() {
 
     // ── editor helpers ─────────────────────────────────────────────────────
     blankDraft(type) {
-      if (type === 'articles')   return { title:'', slug:'', excerpt:'', content:'', cover_image:'', category_id:'', category_name:'', category_color:'', author_name:'NDM Staff', author_image:'', featured:false, published:false, published_at: D.todayISO() + 'T00:00' };
+      if (type === 'articles')   return { title:'', slug:'', excerpt:'', content:'', cover_image:'', video_url:'', category_id:'', category_name:'', category_color:'', author_name:'NDM Staff', author_image:'', featured:false, published:false, published_at: D.todayISO() + 'T00:00' };
       if (type === 'categories') return { name:'', slug:'', color:'#B91C1C', description:'', sort_order: this.categories.length + 1 };
       return {};
     },
@@ -318,18 +359,76 @@ function admin() {
       this.saveError   = '';
       this.uploadStatus= '';
       window.scrollTo({ top:0, behavior:'smooth' });
+      if (type === 'articles') this._initQuill('');
     },
 
     edit(type, i) {
       this.editing     = i;
       this.editingType = type;
-      this.draft       = JSON.parse(JSON.stringify(this[type][i]));
       this.saveError   = '';
       this.uploadStatus= '';
+      // Use whatever we already have from the list as an immediate partial fill,
+      // then fetch the full record (getAllArticles only selects a subset of columns)
+      this.draft = JSON.parse(JSON.stringify(this[type][i]));
       window.scrollTo({ top:0, behavior:'smooth' });
+
+      if (type === 'articles') {
+        this.busy = true;
+        D.getArticleForEdit(this[type][i].id)
+          .then(full => {
+            if (full) this.draft = JSON.parse(JSON.stringify(full));
+            this._initQuill(this.draft.content || '');
+          })
+          .catch(() => {
+            // fallback — init Quill with whatever partial data we have
+            this._initQuill(this.draft.content || '');
+          })
+          .finally(() => { this.busy = false; });
+      }
     },
 
-    cancel() { this.editing = null; this.editingType = null; this.draft = {}; this.saveError = ''; this.uploadStatus = ''; },
+    cancel() {
+      this._destroyQuill();
+      this.editing = null; this.editingType = null; this.draft = {};
+      this.saveError = ''; this.uploadStatus = '';
+    },
+
+    // ── Quill helpers ──────────────────────────────────────────────────────────
+    _quill: null,
+    _initQuill(content) {
+      // Wait for Alpine to render the editor div in the DOM
+      setTimeout(() => {
+        const el = document.getElementById('article-editor');
+        if (!el) return;
+        // Reset the element so Quill can init fresh
+        el.innerHTML = '';
+        this._quill = new Quill('#article-editor', {
+          theme: 'snow',
+          placeholder: 'Write your article here. Click the toolbar buttons to add headings, bold text, bullet points, or a quote...',
+          modules: {
+            toolbar: [
+              [{ header: [2, 3, false] }],
+              ['bold', 'italic', 'underline'],
+              [{ list: 'ordered' }, { list: 'bullet' }],
+              ['blockquote', 'link', 'video'],
+              ['clean'],
+            ]
+          }
+        });
+        if (content) this._quill.root.innerHTML = content;
+        // Keep draft.content in sync as the editor changes
+        this._quill.on('text-change', () => {
+          this.draft.content = this._quill.root.innerHTML;
+        });
+      }, 80);
+    },
+    _destroyQuill() {
+      if (this._quill) {
+        this._quill = null;
+        const el = document.getElementById('article-editor');
+        if (el) el.innerHTML = '';
+      }
+    },
 
     // Auto-generate slug from title
     onTitleChange() {
@@ -507,17 +606,45 @@ function admin() {
       return true;
     },
     _explainUploadError(err) {
-      const msg = (err && (err.message || '')).toLowerCase();
-      if (msg.includes('bucket'))  return 'Upload failed — "photos" storage bucket missing in Supabase. Create it as a public bucket in Dashboard → Storage.';
-      if (msg.includes('policy') || msg.includes('403')) return 'Upload failed — not authorised. Make sure your admin_users row has is_admin = true.';
-      return 'Upload failed: ' + (err?.message || 'Unknown error');
+      // ndm-data.js already translates common errors — just surface the message
+      return err?.message || 'Upload failed. Check your internet connection and try again.';
     },
     _explainError(err) {
       const msg = (err && (err.message || '')).toLowerCase();
-      if (msg.includes('unique') || msg.includes('duplicate')) return 'A record with that slug or name already exists. Choose a different one.';
-      if (msg.includes('policy') || msg.includes('rls')) return 'Save blocked by Supabase policy — make sure your admin_users.is_admin is true, then sign out and back in.';
-      if (msg.includes('not-null') || msg.includes('violates')) return 'A required field is missing. Check all fields and try again.';
-      return 'Save failed: ' + (err?.message || 'Unknown error. Check the browser console.');
+      if (msg.includes('insert-timeout') || msg.includes('update-timeout')) {
+        return 'Save timed out. This usually means either your internet is slow or your account is not set up as admin in Supabase. ' +
+               'Check: Supabase → Table Editor → admin_users → make sure your row has is_admin = true. Then sign out and back in.';
+      }
+      if (msg.includes('unique') || msg.includes('duplicate')) return 'An article with that slug already exists. Change the URL slug slightly and try again.';
+      if (msg.includes('policy') || msg.includes('rls') || msg.includes('violates')) {
+        return 'Supabase rejected the save. Your account is not recognised as admin. ' +
+               'Go to Supabase → SQL Editor and run: UPDATE public.admin_users SET is_admin = true WHERE email = \'your@email.com\'; ' +
+               'Then sign out and back in.';
+      }
+      if (msg.includes('video_url') || msg.includes('column')) {
+        return 'Save failed — your database is missing the video_url column. Run supabase/migrations/003_video.sql in the Supabase SQL editor, then try again.';
+      }
+      if (msg.includes('not-null')) return 'A required field is empty. Fill in the Title and Slug then try again.';
+      return 'Save failed: ' + (err?.message || 'Unknown error. Open browser console (F12) for details.');
+    },
+
+    // ── Video helpers ──────────────────────────────────────────────────────────
+    parseVideoId(url) {
+      if (!url) return null;
+      // YouTube
+      const yt = url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/);
+      if (yt) return { type: 'youtube', id: yt[1] };
+      // Vimeo
+      const vi = url.match(/vimeo\.com\/(?:.*\/)?(\d+)/);
+      if (vi) return { type: 'vimeo', id: vi[1] };
+      return null;
+    },
+    buildEmbedUrl(url) {
+      const v = this.parseVideoId(url);
+      if (!v) return '';
+      if (v.type === 'youtube') return `https://www.youtube.com/embed/${v.id}?rel=0&modestbranding=1`;
+      if (v.type === 'vimeo')   return `https://player.vimeo.com/video/${v.id}?dnt=1`;
+      return '';
     },
 
     // ── computed helpers ───────────────────────────────────────────────────
@@ -565,8 +692,8 @@ function admin() {
           <input type="password" class="form-input" placeholder="••••••••" x-model="pw" autocomplete="current-password"/>
         </div>
         <button type="submit" class="btn btn-primary btn-full" :class="{busy:loginBusy}">
-          <template x-if="loginBusy"><span class="spinner white"></span></template>
-          <template x-if="!loginBusy">Sign In</template>
+          <span class="spinner white" x-show="loginBusy"></span>
+          <span x-show="!loginBusy">Sign In</span>
         </button>
       </form>
       <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
@@ -679,11 +806,11 @@ function admin() {
               <textarea class="form-textarea" placeholder="A short 1–2 sentence summary shown on article cards and search results." x-model="draft.excerpt" rows="3"></textarea>
             </div>
 
-            <!-- Content -->
+            <!-- Content — Quill rich text editor -->
             <div class="form-group">
               <label class="form-label">Full Article Content</label>
-              <textarea class="form-textarea content" placeholder="Write the full article here. You can use basic HTML tags: &lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;blockquote&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;a href=''&gt;…" x-model="draft.content" rows="18"></textarea>
-              <span class="form-hint">Supports HTML. Wrap paragraphs in &lt;p&gt; tags. Use &lt;blockquote&gt; for pull quotes.</span>
+              <div id="article-editor"></div>
+              <span class="form-hint">Use the toolbar to add headings, bold, bullet points and more. No HTML needed.</span>
             </div>
 
             <!-- Cover image -->
@@ -705,6 +832,22 @@ function admin() {
                 </template>
               </div>
               <input type="file" accept="image/*" x-ref="coverFile" style="display:none" @change="onCoverFile($event)"/>
+            </div>
+
+            <!-- Video embed -->
+            <div class="form-group">
+              <label class="form-label">Video Link <span style="font-weight:400;font-family:inherit;text-transform:none;letter-spacing:0;">(optional — YouTube or Vimeo)</span></label>
+              <input type="url" class="form-input" placeholder="e.g. https://www.youtube.com/watch?v=abc123" x-model="draft.video_url"/>
+              <span class="form-hint">Paste a YouTube or Vimeo link. The video will appear below the article headline on the website.</span>
+              <!-- Live preview -->
+              <div x-show="draft.video_url && parseVideoId(draft.video_url)" style="margin-top:10px;border-radius:6px;overflow:hidden;aspect-ratio:16/9;max-width:480px;">
+                <iframe
+                  :src="buildEmbedUrl(draft.video_url)"
+                  style="width:100%;height:100%;border:none;"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen>
+                </iframe>
+              </div>
             </div>
 
             <!-- Author + Date -->
@@ -732,8 +875,8 @@ function admin() {
             <!-- Actions -->
             <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--border-light);">
               <button class="btn btn-primary" :class="{busy}" @click="save()">
-                <template x-if="busy"><span class="spinner white"></span></template>
-                <template x-if="!busy" x-text="editing==='new' ? 'Publish Article' : 'Save Changes'"></template>
+                <span class="spinner white" x-show="busy"></span>
+                <span x-show="!busy" x-text="editing==='new' ? 'Publish Article' : 'Save Changes'"></span>
               </button>
               <button class="btn btn-secondary" @click="cancel()">Cancel</button>
             </div>
@@ -815,8 +958,8 @@ function admin() {
             </div>
             <div style="display:flex;gap:10px;padding-top:8px;border-top:1px solid var(--border-light);">
               <button class="btn btn-primary" :class="{busy}" @click="save()">
-                <template x-if="busy"><span class="spinner white"></span></template>
-                <template x-if="!busy" x-text="editing==='new' ? 'Create Category' : 'Save Changes'"></template>
+                <span class="spinner white" x-show="busy"></span>
+                <span x-show="!busy" x-text="editing==='new' ? 'Create Category' : 'Save Changes'"></span>
               </button>
               <button class="btn btn-secondary" @click="cancel()">Cancel</button>
             </div>
@@ -934,8 +1077,8 @@ function admin() {
         <div class="admin-topbar">
           <h2>Site Settings</h2>
           <button class="btn btn-primary" :class="{busy:settingsBusy}" @click="saveSettings()">
-            <template x-if="settingsBusy"><span class="spinner white"></span></template>
-            <template x-if="!settingsBusy">Save All Settings</template>
+            <span class="spinner white" x-show="settingsBusy"></span>
+            <span x-show="!settingsBusy">Save All Settings</span>
           </button>
         </div>
         <div x-show="settingsSaved" class="alert alert-success">✓ Settings saved successfully!</div>
@@ -998,8 +1141,8 @@ function admin() {
 
         <div style="margin-top:8px;">
           <button class="btn btn-primary btn-lg" :class="{busy:settingsBusy}" @click="saveSettings()">
-            <template x-if="settingsBusy"><span class="spinner white"></span></template>
-            <template x-if="!settingsBusy">Save All Settings</template>
+            <span class="spinner white" x-show="settingsBusy"></span>
+            <span x-show="!settingsBusy">Save All Settings</span>
           </button>
         </div>
       </div>

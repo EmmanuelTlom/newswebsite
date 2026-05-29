@@ -4,8 +4,55 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title id="page-title">Article — National Detective Magazine</title>
-<meta name="description" content="Read the full story on National Detective Magazine."/>
-<link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
+<meta name="description"             content="Read the full story on National Detective Magazine." id="meta-desc"/>
+
+<!-- Open Graph defaults — updated by JS once article loads -->
+<meta property="og:type"        content="article"/>
+<meta property="og:site_name"   content="National Detective Magazine"/>
+<meta property="og:title"       content="National Detective Magazine" id="og-title"/>
+<meta property="og:description" content="Read the full story on National Detective Magazine." id="og-desc"/>
+<meta property="og:url"         content="https://nationaldetectivemagazine.netlify.app/article.html" id="og-url"/>
+<meta property="og:image"       content="https://nationaldetectivemagazine.netlify.app/assets/og-default.svg" id="og-image"/>
+<meta property="og:image:width"  content="1200"/>
+<meta property="og:image:height" content="630"/>
+
+<!-- Twitter Card defaults -->
+<meta name="twitter:card"        content="summary_large_image"/>
+<meta name="twitter:site"        content="@ndmmagazine"/>
+<meta name="twitter:title"       content="National Detective Magazine" id="tw-title"/>
+<meta name="twitter:description" content="Read the full story on National Detective Magazine." id="tw-desc"/>
+<meta name="twitter:image"       content="https://nationaldetectivemagazine.netlify.app/assets/og-default.svg" id="tw-image"/>
+
+<link rel="icon"             type="image/svg+xml" href="assets/favicon.svg"/>
+<link rel="apple-touch-icon"                      href="assets/favicon.svg"/>
+<meta name="theme-color" content="#B91C1C"/>
+
+<!-- Update meta tags as soon as the article data loads (helps Telegram, Slack, Discord) -->
+<script>
+function updateArticleMeta(art) {
+  const base = 'https://nationaldetectivemagazine.netlify.app';
+  const title = art.title + ' — National Detective Magazine';
+  const desc  = art.excerpt || 'Read the full story on National Detective Magazine.';
+  const img   = art.cover_image || (base + '/assets/og-default.svg');
+  const url   = base + '/article.html?slug=' + encodeURIComponent(art.slug);
+
+  document.title = title;
+  document.getElementById('page-title').textContent = title;
+  document.getElementById('meta-desc').content = desc;
+  document.getElementById('og-title').content  = title;
+  document.getElementById('og-desc').content   = desc;
+  document.getElementById('og-url').content    = url;
+  document.getElementById('og-image').content  = img;
+  document.getElementById('tw-title').content  = title;
+  document.getElementById('tw-desc').content   = desc;
+  document.getElementById('tw-image').content  = img;
+
+  // Canonical link
+  let canon = document.querySelector('link[rel="canonical"]');
+  if (!canon) { canon = document.createElement('link'); canon.rel = 'canonical'; document.head.appendChild(canon); }
+  canon.href = url;
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="stylesheet" href="assets/style.css"/>
@@ -114,6 +161,21 @@
         <div class="article-cover" x-show="article.cover_image">
           <img :src="article.cover_image" :alt="article.title" loading="eager"/>
         </div>
+
+        <!-- Video embed — shows if admin added a YouTube or Vimeo link -->
+        <template x-if="article.video_url && buildEmbedUrl(article.video_url)">
+          <div class="article-cover" style="padding-top:0;">
+            <div style="position:relative;aspect-ratio:16/9;border-radius:0 0 3px 3px;overflow:hidden;background:#000;max-width:860px;margin:0 auto;">
+              <iframe
+                :src="buildEmbedUrl(article.video_url)"
+                style="position:absolute;inset:0;width:100%;height:100%;border:none;"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+                loading="lazy">
+              </iframe>
+            </div>
+          </div>
+        </template>
       </div>
 
       <!-- Article body + sidebar layout -->
@@ -295,7 +357,7 @@ function articlePage() {
       this.latestArticles = latest.filter(a => a.slug !== slug);
 
       if (art) {
-        document.title = art.title + ' — National Detective Magazine';
+        updateArticleMeta(art); // updates <title> + all og/twitter meta tags
         // increment view count (fire and forget)
         D.incrementViews(art.id);
         // load more from same category
@@ -333,6 +395,22 @@ function articlePage() {
       return new Date(iso).toLocaleDateString('en-NG', { day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
     },
     fmtNum(n) { return Number(n || 0).toLocaleString('en-NG'); },
+
+    parseVideoId(url) {
+      if (!url) return null;
+      const yt = url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/);
+      if (yt) return { type: 'youtube', id: yt[1] };
+      const vi = url.match(/vimeo\.com\/(?:.*\/)?(\d+)/);
+      if (vi) return { type: 'vimeo', id: vi[1] };
+      return null;
+    },
+    buildEmbedUrl(url) {
+      const v = this.parseVideoId(url);
+      if (!v) return '';
+      if (v.type === 'youtube') return `https://www.youtube.com/embed/${v.id}?rel=0&modestbranding=1`;
+      if (v.type === 'vimeo')   return `https://player.vimeo.com/video/${v.id}?dnt=1`;
+      return '';
+    },
   };
 }
 </script>

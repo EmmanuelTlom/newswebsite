@@ -217,7 +217,7 @@
     if (!table) throw new Error('Unknown type: ' + type);
     const { data, error } = await withTimeout(
       sb.from(table).insert(sanitizePayload(item)).select().single(),
-      10000, 'insert-timeout'
+      25000, 'insert-timeout'   // 25s — articles with long content need time on slow connections
     );
     if (error) throw error;
     return data;
@@ -228,7 +228,7 @@
     if (!table) throw new Error('Unknown type: ' + type);
     const { data, error } = await withTimeout(
       sb.from(table).update(sanitizePayload(item)).eq('id', id).select().single(),
-      10000, 'update-timeout'
+      25000, 'update-timeout'
     );
     if (error) throw error;
     return data;
@@ -239,7 +239,7 @@
     if (!table) throw new Error('Unknown type: ' + type);
     const { error } = await withTimeout(
       sb.from(table).delete().eq('id', id),
-      10000, 'delete-timeout'
+      15000, 'delete-timeout'
     );
     if (error) throw error;
   }
@@ -247,7 +247,7 @@
   async function saveSettings(patch) {
     const { error } = await withTimeout(
       sb.from('site_settings').update(sanitizePayload(patch)).eq('id', 1),
-      10000, 'settings-timeout'
+      15000, 'settings-timeout'
     );
     if (error) throw error;
     return true;
@@ -279,14 +279,52 @@
   // ── STORAGE ─────────────────────────────────────────────────────────────────
 
   async function uploadPhoto(file) {
-    await ensureFreshSession();
+    // Refresh session first — if this fails it means the user isn't logged in properly
+    try {
+      await ensureFreshSession();
+    } catch (sessionErr) {
+      throw new Error('Session expired. Please sign out and sign back in, then try again.');
+    }
+
     const safeName = file.name.replace(/[^\w.\-]+/g, '_');
-    const path = Date.now() + '-' + safeName;
+    const path = 'articles/' + Date.now() + '-' + safeName;
+
     const { data, error } = await withTimeout(
-      sb.storage.from('photos').upload(path, file, { contentType: file.type }),
-      60000, 'photo-upload-timeout'
+      sb.storage.from('photos').upload(path, file, {
+        contentType: file.type,
+        upsert: false,
+      }),
+      120000, 'photo-upload-timeout'  // 120s for large images on slow connections
     );
-    if (error) throw error;
+
+    if (error) {
+      // Translate common Supabase storage errors into plain English
+      const msg = (error.message || error.error || '').toLowerCase();
+      if (msg.includes('bucket') || msg.includes('not found')) {
+        throw new Error(
+          'The "photos" storage bucket is missing. ' +
+          'Fix: Go to your Supabase dashboard → Storage → Create a new bucket named exactly "photos" and tick "Public bucket". ' +
+          'Then run supabase/migrations/003_video.sql in the SQL editor.'
+        );
+      }
+      if (msg.includes('policy') || msg.includes('violates') || msg.includes('403') || msg.includes('unauthorized')) {
+        throw new Error(
+          'Upload blocked by Supabase. Your account may not be set as admin. ' +
+          'Run this in the Supabase SQL editor: UPDATE public.admin_users SET is_admin = true WHERE email = \'your@email.com\'; ' +
+          'Then sign out and back in.'
+        );
+      }
+      if (msg.includes('duplicate') || msg.includes('already exists')) {
+        // Retry with a slightly different name
+        const retryPath = 'articles/' + Date.now() + '-retry-' + safeName;
+        const { data: d2, error: e2 } = await sb.storage.from('photos').upload(retryPath, file, { contentType: file.type });
+        if (e2) throw e2;
+        const { data: pub2 } = sb.storage.from('photos').getPublicUrl(d2.path);
+        return pub2.publicUrl;
+      }
+      throw error;
+    }
+
     const { data: pub } = sb.storage.from('photos').getPublicUrl(data.path);
     return pub.publicUrl;
   }

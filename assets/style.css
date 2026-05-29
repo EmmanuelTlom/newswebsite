@@ -442,6 +442,18 @@ button { cursor: pointer; font-family: inherit; }
 .article-body ul, .article-body ol { padding-left: 22px; margin-bottom: 22px; }
 .article-body li { margin-bottom: 8px; }
 .article-body img { margin: 28px 0; border-radius: 3px; }
+
+/* Quill inline video embeds — make responsive */
+.article-body .ql-video,
+.article-body iframe {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 16/9;
+  border-radius: 3px;
+  display: block;
+  margin: 28px 0;
+  border: none;
+}
 .article-layout { display: grid; grid-template-columns: 1fr 300px; gap: 40px; max-width: 1140px; margin: 0 auto; padding: 0 40px 64px; }
 .article-share { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 20px 0; border-top: 1px solid var(--border); margin-top: 28px; }
 .article-share-label { font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-right: 4px; }

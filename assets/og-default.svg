@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0F0F0E"/>
+
+  <!-- Subtle grid texture -->
+  <defs>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="white" stroke-width="0.3" opacity="0.04"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <!-- Left red accent bar -->
+  <rect width="8" height="630" fill="#B91C1C"/>
+
+  <!-- Top red bar -->
+  <rect width="1200" height="5" fill="#B91C1C"/>
+
+  <!-- Bottom red bar -->
+  <rect y="625" width="1200" height="5" fill="#B91C1C"/>
+
+  <!-- Right decorative column -->
+  <rect x="820" width="380" height="630" fill="white" opacity="0.02"/>
+  <rect x="820" width="1" height="630" fill="white" opacity="0.06"/>
+
+  <!-- NATIONAL -->
+  <text x="72" y="230"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="88" font-weight="900" font-style="italic"
+    fill="white" opacity="0.92" letter-spacing="-2">
+    NATIONAL
+  </text>
+
+  <!-- DETECTIVE (red) -->
+  <text x="72" y="360"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="108" font-weight="900" font-style="italic"
+    fill="#B91C1C" letter-spacing="-3">
+    DETECTIVE
+  </text>
+
+  <!-- MAGAZINE -->
+  <text x="76" y="432"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="54" font-weight="400"
+    fill="white" opacity="0.55" letter-spacing="6">
+    MAGAZINE
+  </text>
+
+  <!-- Divider -->
+  <rect x="72" y="466" width="100" height="2" fill="#B91C1C"/>
+
+  <!-- Tagline -->
+  <text x="72" y="516"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="19" font-weight="400"
+    fill="white" opacity="0.38" letter-spacing="4.5">
+    UNCOVERING THE TRUTH, EVERY DAY
+  </text>
+
+  <!-- Domain label bottom right -->
+  <text x="1128" y="604"
+    font-family="'Courier New', 'Lucida Console', monospace"
+    font-size="14"
+    fill="white" opacity="0.22" text-anchor="end" letter-spacing="1">
+    nationaldetectivemagazine.netlify.app
+  </text>
+
+  <!-- NDM monogram top right -->
+  <text x="1140" y="88"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="52" font-weight="900" font-style="italic"
+    fill="white" opacity="0.06" text-anchor="end">
+    NDM
+  </text>
+</svg>

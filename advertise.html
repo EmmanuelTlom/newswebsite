@@ -23,6 +23,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="stylesheet" href="assets/style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="assets/ndm-config.js"></script>
 <script src="assets/ndm-data.js"></script>
@@ -34,8 +35,7 @@
 <nav class="nav">
   <div class="nav-inner">
     <a href="index.html" class="nav-brand">
-      <span class="nav-brand-name">National <span>Detective</span></span>
-      <span class="nav-brand-tag">Magazine · Est. Nigeria</span>
+      <img src="assets/logo.jpg" alt="National Detective Magazine" class="nav-logo"/>
     </a>
     <div class="nav-links">
       <a href="index.html"     class="nav-link">Home</a>
@@ -43,7 +43,6 @@
       <a href="contact.html"   class="nav-link">Contact</a>
       <a href="advertise.html" class="nav-link active">Advertise</a>
     </div>
-    <span class="nav-live"><span class="nav-live-dot"></span> Live</span>
     <button class="nav-burger" @click="navOpen=!navOpen" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
@@ -229,8 +228,7 @@
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <div class="footer-brand-name">National <span>Detective</span></div>
-          <div class="footer-brand-tag">Magazine · Nigeria</div>
+          <img src="assets/logo.jpg" alt="National Detective Magazine" class="footer-logo"/>
           <p>Nigeria's foremost investigative news publication.</p>
         </div>
         <div class="footer-col">

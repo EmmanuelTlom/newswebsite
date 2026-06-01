@@ -87,7 +87,9 @@ button { cursor: pointer; font-family: inherit; }
   padding: 0 40px; height: 64px;
   gap: 16px;
 }
-.nav-brand { display: flex; flex-direction: column; gap: 1px; text-decoration: none; flex-shrink: 0; }
+.nav-brand { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
+.nav-logo  { height: 40px; width: auto; display: block; object-fit: contain; }
+.footer-logo { height: 52px; width: auto; display: block; object-fit: contain; margin-bottom: 12px; }
 .nav-brand-name {
   font-family: var(--font-display);
   font-size: 17px; font-weight: 900; font-style: italic;
@@ -582,10 +584,12 @@ button { cursor: pointer; font-family: inherit; }
 .social-btn {
   padding: 7px 14px; border-radius: 5px;
   border: 1px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; gap: 7px;
   font-size: 11.5px; font-weight: 700; font-family: var(--font-mono);
   letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--text-muted); transition: all 0.15s; text-decoration: none;
 }
+.social-btn i { font-size: 14px; }
 .social-btn:hover { border-color: var(--crimson); color: var(--crimson); background: var(--crimson-faint); }
 
 /* Success circle — replaces emoji checkmark */
@@ -628,11 +632,11 @@ footer { background: var(--ink); color: white; padding: 48px 0 0; }
 .footer-brand p   { color: rgba(255,255,255,0.45); font-size: 13px; line-height: 1.7; max-width: 260px; margin-bottom: 18px; }
 .footer-socials   { display: flex; gap: 8px; flex-wrap: wrap; }
 .footer-social {
-  padding: 6px 12px; border-radius: 4px;
+  width: 36px; height: 36px; border-radius: 5px;
   border: 1px solid rgba(255,255,255,0.12); background: transparent;
-  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  color: rgba(255,255,255,0.5); text-decoration: none; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; color: rgba(255,255,255,0.55);
+  text-decoration: none; transition: all 0.15s;
 }
 .footer-social:hover { background: var(--crimson); border-color: var(--crimson); color: white; }
 .footer-col h5 { color: rgba(255,255,255,0.4); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 14px; font-weight: 700; font-family: var(--font-mono); }
